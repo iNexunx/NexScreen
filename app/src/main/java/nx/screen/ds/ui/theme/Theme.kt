@@ -401,6 +401,7 @@ fun AppOutlinedTextField(
     label: @Composable (() -> Unit)? = null,
     placeholder: @Composable (() -> Unit)? = null,
     leadingIcon: @Composable (() -> Unit)? = null,
+    supportingText: @Composable (() -> Unit)? = null,
     singleLine: Boolean = false,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
 ) {
@@ -412,6 +413,7 @@ fun AppOutlinedTextField(
         label = label,
         placeholder = placeholder,
         leadingIcon = leadingIcon,
+        supportingText = supportingText,
         singleLine = singleLine,
         keyboardOptions = keyboardOptions,
         shape = if (LocalUiSystem.current == UiSystem.MIUIX) {

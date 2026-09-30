@@ -405,7 +405,7 @@ private fun ProfileScreen(
     backendReady: Boolean,
     modifier: Modifier = Modifier,
     onBack: () -> Unit,
-    onSave: (Int?, Int?, Int?) -> Unit,
+    onSave: (Int?, Int?, Int?, Int?) -> Unit,
     onRemove: () -> Unit,
     onOpen: () -> Unit,
     onRestart: () -> Unit,
