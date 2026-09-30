@@ -35,33 +35,47 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
 
-      - name: Restaurar keystore
+      - name: Preparar keystore
         env:
           KEYSTORE_B64: ${{ secrets.KEYSTORE_B64 }}
           STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
-          if [ -z "$KEYSTORE_B64" ]; then
-            echo "::error::Falta el secreto KEYSTORE_B64"
-            exit 1
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/nexun.jks"
+            {
+              echo "KS_FILE=$RUNNER_TEMP/nexun.jks"
+              echo "STORE_TYPE=JKS"
+              echo "STORE_PASSWORD=$STORE_PASSWORD"
+              echo "KEY_ALIAS=$KEY_ALIAS"
+              echo "KEY_PASSWORD=${KEY_PASSWORD:-$STORE_PASSWORD}"
+            } >> "$GITHUB_ENV"
+            echo ">>> Firmando con tu keystore"
+          else
+            cp keystore/aosp-testkey.p12 "$RUNNER_TEMP/aosp-testkey.p12"
+            {
+              echo "KS_FILE=$RUNNER_TEMP/aosp-testkey.p12"
+              echo "STORE_TYPE=PKCS12"
+              echo "STORE_PASSWORD=android"
+              echo "KEY_ALIAS=testkey"
+              echo "KEY_PASSWORD=android"
+            } >> "$GITHUB_ENV"
+            echo "::warning title=Testkey de AOSP::No hay secretos de firma configurados. Se firma con el testkey publico de AOSP (CN=Android). Es la MISMA clave que tiene todo el mundo: sirve para pruebas, pero cualquiera puede firmar una actualizacion que Android aceptara como tuya."
           fi
-          echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/nexun.jks"
 
       - name: Validar keystore
-        env:
-          STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
         run: |
-          keytool -list -keystore "$RUNNER_TEMP/nexun.jks" \
+          keytool -list -keystore "$KS_FILE" -storetype "$STORE_TYPE" \
             -storepass "$STORE_PASSWORD" -alias "$KEY_ALIAS"
 
       - name: Build release (R8 + shrink)
         env:
-          NEXUN_KEYSTORE: ${{ runner.temp }}/nexun.jks
-          NEXUN_STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
-          NEXUN_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-          NEXUN_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          NEXUN_KEYSTORE: ${{ env.KS_FILE }}
+          NEXUN_STORE_TYPE: ${{ env.STORE_TYPE }}
+          NEXUN_STORE_PASSWORD: ${{ env.STORE_PASSWORD }}
+          NEXUN_KEY_ALIAS: ${{ env.KEY_ALIAS }}
+          NEXUN_KEY_PASSWORD: ${{ env.KEY_PASSWORD }}
         run: |
           ./gradlew :app:assembleRelease \
             -Pandroid.injected.signing.versionCode=1
@@ -81,10 +95,27 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ steps.ver.outputs.name }}
+          STORE_TYPE: ${{ env.STORE_TYPE }}
         run: |
-          git tag -a "v$TAG" -m "Release $TAG"
-          git push origin "v$TAG"
+          NOTES="$(mktemp)"
+          if [ "$STORE_TYPE" = "PKCS12" ]; then
+            {
+              printf '%s\n' '> [!WARNING]'
+              printf '%s\n' '> Esta build esta firmada con el **testkey publico de AOSP** (`CN=Android`).'
+              printf '%s\n' '> Es una clave que tiene todo el mundo, asi que **no aporta seguridad**: cualquiera'
+              printf '%s\n' '> con la misma clave podria firmar una actualizacion que Android aceptaria como tuya.'
+              printf '%s\n' '> Sirve para pruebas, no para distribuir entre usuarios reales.'
+              printf '\n%s\n' '> Para una release real hay que configurar los secretos `KEYSTORE_B64`, `STORE_PASSWORD`, `KEY_ALIAS` y `KEY_PASSWORD`.'
+            } > "$NOTES"
+          fi
+          # Solo en dispatch creamos el tag. Si el workflow entra por
+          # `push: tags: v*`, el tag ya existe y `git tag -a` fallaria.
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            git tag -a "v$TAG" -m "Release $TAG"
+            git push origin "v$TAG"
+          fi
           gh release create "v$TAG" \
             "NexScreen-$TAG.apk" \
             --title "NexScreen $TAG" \
+            --notes-file "$NOTES" \
             --generate-notes

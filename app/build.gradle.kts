@@ -48,6 +48,8 @@ android {
                 keyAlias = cred("NEXUN_KEY_ALIAS", "keyAlias") ?: "nexun"
                 keyPassword = cred("NEXUN_KEY_PASSWORD", "keyPassword")
                     ?: cred("NEXUN_STORE_PASSWORD", "storePassword")
+                // JKS para el keystore propio; PKCS12 para el testkey de AOSP.
+                cred("NEXUN_STORE_TYPE", "storeType")?.let { storeType = it }
                 enableV1Signing = true
                 enableV2Signing = true
                 enableV3Signing = true
