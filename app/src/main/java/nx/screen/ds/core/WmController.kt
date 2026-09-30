@@ -83,12 +83,11 @@ class WmController(private val shell: Shell) {
      *             no por app, asi que solo tiene sentido aplicarlo mientras la
      *             app esta en primer plano y restaurarlo al salir.
      */
-    suspend fun setRotation(lock: Int?) {
+    suspend fun setRotation(lock: Int?): CommandResult =
         shell.run(
             if (lock == null) "wm user-rotation free"
             else "wm user-rotation lock ${lock.coerceIn(0, 3)}"
         )
-    }
 
     private fun parseLine(out: String, key: String): Int? {
         out.lineSequence().forEach { line ->
