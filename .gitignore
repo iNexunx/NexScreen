@@ -1,0 +1,28 @@
+# Gradle
+.gradle/
+build/
+local.properties
+
+# Android
+*.apk
+*.aab
+*.ap_
+*.dex
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Signing material — NEVER commit these
+*.jks
+*.keystore
+nexun-signing.properties
+google-services.json
+
+# IDE
+.idea/
+*.iml
+.DS_Store
+
+# Tooling scratch
+*.log
+__pycache__/

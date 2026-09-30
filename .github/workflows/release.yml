@@ -1,0 +1,90 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version_name:
+        description: 'Nombre de versión (ej. 1.0)'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Determinar versión
+        id: ver
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "name=${{ inputs.version_name }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "name=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Restaurar keystore
+        env:
+          KEYSTORE_B64: ${{ secrets.KEYSTORE_B64 }}
+          STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          if [ -z "$KEYSTORE_B64" ]; then
+            echo "::error::Falta el secreto KEYSTORE_B64"
+            exit 1
+          fi
+          echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/nexun.jks"
+
+      - name: Validar keystore
+        env:
+          STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+        run: |
+          keytool -list -keystore "$RUNNER_TEMP/nexun.jks" \
+            -storepass "$STORE_PASSWORD" -alias "$KEY_ALIAS"
+
+      - name: Build release (R8 + shrink)
+        env:
+          NEXUN_KEYSTORE: ${{ runner.temp }}/nexun.jks
+          NEXUN_STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
+          NEXUN_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          NEXUN_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          ./gradlew :app:assembleRelease \
+            -Pandroid.injected.signing.versionCode=1
+
+      - name: Verificar que el APK está firmado
+        run: |
+          APK=$(find app/build/outputs/apk/release -name '*.apk' | head -1)
+          if [ -z "$APK" ]; then
+            echo "::error::No se generó APK"
+            exit 1
+          fi
+          "$ANDROID_HOME"/build-tools/*/apksigner verify --print-certs "$APK"
+          cp "$APK" "NexScreen-${{ steps.ver.outputs.name }}.apk"
+          echo "APK=$APK" >> "$GITHUB_ENV"
+
+      - name: Publicar release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.ver.outputs.name }}
+        run: |
+          git tag -a "v$TAG" -m "Release $TAG"
+          git push origin "v$TAG"
+          gh release create "v$TAG" \
+            "NexScreen-$TAG.apk" \
+            --title "NexScreen $TAG" \
+            --generate-notes
