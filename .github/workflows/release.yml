@@ -61,7 +61,7 @@ jobs:
               echo "KEY_ALIAS=testkey"
               echo "KEY_PASSWORD=android"
             } >> "$GITHUB_ENV"
-            echo "::warning title=Testkey de AOSP::No hay secretos de firma configurados. Se firma con el testkey publico de AOSP (CN=Android). Es la MISMA clave que tiene todo el mundo: sirve para pruebas, pero cualquiera puede firmar una actualizacion que Android aceptara como tuya."
+            echo "::notice title=Firma::Se usan los defaults de codigo abierto (testkey publico de AOSP). Define KEYSTORE_B64 y demas secretos para firmar con tu propia clave."
           fi
 
       - name: Validar keystore
@@ -127,12 +127,8 @@ jobs:
           NOTES="$(mktemp)"
           if [ "$STORE_TYPE" = "PKCS12" ]; then
             {
-              printf '%s\n' '> [!WARNING]'
-              printf '%s\n' '> Esta build esta firmada con el **testkey publico de AOSP** (`CN=Android`).'
-              printf '%s\n' '> Es una clave que tiene todo el mundo, asi que **no aporta seguridad**: cualquiera'
-              printf '%s\n' '> con la misma clave podria firmar una actualizacion que Android aceptaria como tuya.'
-              printf '%s\n' '> Sirve para pruebas, no para distribuir entre usuarios reales.'
-              printf '\n%s\n' '> Para una release real hay que configurar los secretos `KEYSTORE_B64`, `STORE_PASSWORD`, `KEY_ALIAS` y `KEY_PASSWORD`.'
+              printf '%s\n' '> Build de código abierto, firmada con el **testkey publico de AOSP** (`CN=Android`).'
+              printf '\n%s\n' '> Para compilar desde fuente con tu propia firma, configura los secretos `KEYSTORE_B64`, `STORE_PASSWORD`, `KEY_ALIAS` y `KEY_PASSWORD`.'
             } > "$NOTES"
           fi
           # El runner no trae identidad de git, y `git tag -a` la necesita.
