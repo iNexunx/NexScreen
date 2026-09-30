@@ -14,7 +14,6 @@
 -keepclassmembers enum nx.screen.ds.** {
     public static **[] values();
     public static ** valueOf(java.lang.String);
-    ***;
 }
 -keep enum nx.screen.ds.** {
     *;
