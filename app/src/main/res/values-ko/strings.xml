@@ -69,6 +69,9 @@
     <string name="restart_needs_backend">열기는 항상 작동합니다. 다시 시작과 강제 종료에는 활성 Shizuku 또는 루트가 필요합니다.</string>
     <string name="custom_density">사용자 지정 밀도</string>
     <string name="custom_dpi">사용자 지정 DPI</string>
+    <string name="custom_rotation">회전</string>
+    <string name="rotation_note">앱이 화면에 있을 때만 적용됩니다. 자체 방향을 지정하는 앱은 이를 무시합니다.</string>
+    <string name="dpi_range">%1$d ~ %2$d dpi</string>
     <string name="custom_resolution">사용자 지정 해상도</string>
     <string name="width_short">너비</string>
     <string name="height_short">높이</string>

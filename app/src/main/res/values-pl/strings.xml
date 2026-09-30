@@ -69,6 +69,9 @@
     <string name="restart_needs_backend">Otwieranie działa zawsze; ponowne uruchomienie i wymuszone zamknięcie wymagają aktywnego Shizuku lub roota.</string>
     <string name="custom_density">Niestandardowa gęstość</string>
     <string name="custom_dpi">Niestandardowy DPI</string>
+    <string name="custom_rotation">Obrót</string>
+    <string name="rotation_note">Działa tylko, gdy aplikacja jest na ekranie. Aplikacje z własną orientacją to ignorują.</string>
+    <string name="dpi_range">Od %1$d do %2$d dpi</string>
     <string name="custom_resolution">Niestandardowa rozdzielczość</string>
     <string name="width_short">Szerokość</string>
     <string name="height_short">Wysokość</string>

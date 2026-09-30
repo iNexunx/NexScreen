@@ -69,6 +69,9 @@
     <string name="restart_needs_backend">Buka selalu berfungsi; mulai ulang dan paksa tutup memerlukan Shizuku atau root aktif.</string>
     <string name="custom_density">Densitas kustom</string>
     <string name="custom_dpi">DPI kustom</string>
+    <string name="custom_rotation">Rotasi</string>
+    <string name="rotation_note">Hanya berlaku selama aplikasi terlihat. Aplikasi yang mengatur orientasinya sendiri akan mengabaikannya.</string>
+    <string name="dpi_range">Antara %1$d dan %2$d dpi</string>
     <string name="custom_resolution">Resolusi kustom</string>
     <string name="width_short">Lebar</string>
     <string name="height_short">Tinggi</string>

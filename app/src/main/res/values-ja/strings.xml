@@ -69,6 +69,9 @@
     <string name="restart_needs_backend">開くは常に動作します。再起動と強制終了にはアクティブな Shizuku または root が必要です。</string>
     <string name="custom_density">カスタム密度</string>
     <string name="custom_dpi">カスタム DPI</string>
+    <string name="custom_rotation">回転</string>
+    <string name="rotation_note">アプリが画面にある間だけ適用されます。独自の向きを指定するアプリは無視します。</string>
+    <string name="dpi_range">%1$d 〜 %2$d dpi</string>
     <string name="custom_resolution">カスタム解像度</string>
     <string name="width_short">幅</string>
     <string name="height_short">高さ</string>

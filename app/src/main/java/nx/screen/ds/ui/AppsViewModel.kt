@@ -144,9 +144,9 @@ class AppsViewModel(app: Application) : AndroidViewModel(app) {
         _searchQuery.value = q
     }
 
-    fun saveProfile(pkg: String, density: Int?, width: Int?, height: Int?) {
+    fun saveProfile(pkg: String, density: Int?, width: Int?, height: Int?, rotation: Int? = null) {
         viewModelScope.launch {
-            store.set(AppProfile(pkg, density, width, height))
+            store.set(AppProfile(pkg, density, width, height, rotation))
             refreshUsageState()
             if (_usageAccess.value && !_serviceRunning.value) startService()
             val foreground = withContext(Dispatchers.IO) { isForeground(pkg) }
@@ -174,6 +174,11 @@ class AppsViewModel(app: Application) : AndroidViewModel(app) {
             val target = Size(profile.width, profile.height)
             if (wm.size() != target) {
                 if (wm.setSize(target).isOk) changed = true else ok = false
+            }
+        }
+        profile.rotation?.let { target ->
+            if (wm.lockedRotation() != target) {
+                if (wm.setRotation(target).isOk) changed = true else ok = false
             }
         }
         if (!ok) {

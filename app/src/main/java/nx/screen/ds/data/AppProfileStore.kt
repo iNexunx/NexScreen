@@ -15,13 +15,16 @@ data class AppProfile(
     val density: Int? = null,
     val width: Int? = null,
     val height: Int? = null,
+    val rotation: Int? = null,
 ) {
-    fun isEmpty(): Boolean = density == null && width == null && height == null
+    fun isEmpty(): Boolean =
+        density == null && width == null && height == null && rotation == null
 
     fun serialize(): String = buildList {
         density?.let { add("d=$it") }
         width?.let { add("w=$it") }
         height?.let { add("h=$it") }
+        rotation?.let { add("r=$it") }
     }.joinToString(";")
 
     companion object {
@@ -29,6 +32,7 @@ data class AppProfile(
             var density: Int? = null
             var w: Int? = null
             var h: Int? = null
+            var rotation: Int? = null
             raw.split(";").forEach { pair ->
                 val kv = pair.split("=")
                 if (kv.size == 2) {
@@ -36,10 +40,11 @@ data class AppProfile(
                         "d" -> kv[1].toIntOrNull()?.let { density = it }
                         "w" -> kv[1].toIntOrNull()?.let { w = it }
                         "h" -> kv[1].toIntOrNull()?.let { h = it }
+                        "r" -> kv[1].toIntOrNull()?.let { rotation = it.coerceIn(0, 3) }
                     }
                 }
             }
-            return AppProfile(pkg, density, w, h)
+            return AppProfile(pkg, density, w, h, rotation)
         }
     }
 }

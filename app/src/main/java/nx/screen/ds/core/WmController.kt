@@ -62,6 +62,34 @@ class WmController(private val shell: Shell) {
 
     suspend fun resetAll(): CommandResult = shell.run("wm size reset; wm density reset")
 
+    /**
+     * Rotacion bloqueada actualmente, o null si el usuario la tiene libre
+     * (giro por sensor). `wm user-rotation` responde con algo asi:
+     *
+     *   Current user rotation configuration:
+     *       rotationMode=USER_ROTATION_LOCKED
+     *       rotation=ROTATION_90
+     */
+    suspend fun lockedRotation(): Int? {
+        val out = shell.run("wm user-rotation").stdout
+        if (!out.contains("USER_ROTATION_LOCKED")) return null
+        return Regex("ROTATION_(\\d+)").find(out)
+            ?.groupValues?.getOrNull(1)?.toIntOrNull()
+    }
+
+    /**
+     * @param lock 0..3 = ROTATION_0/90/180/270, o null para dejar el giro
+     *             libre (por sensor). Ojo: esto es global a todo el usuario,
+     *             no por app, asi que solo tiene sentido aplicarlo mientras la
+     *             app esta en primer plano y restaurarlo al salir.
+     */
+    suspend fun setRotation(lock: Int?) {
+        shell.run(
+            if (lock == null) "wm user-rotation free"
+            else "wm user-rotation lock ${lock.coerceIn(0, 3)}"
+        )
+    }
+
     private fun parseLine(out: String, key: String): Int? {
         out.lineSequence().forEach { line ->
             val idx = line.indexOf(key)

@@ -69,6 +69,9 @@
     <string name="restart_needs_backend">खोलना हमेशा काम करता है; पुनः प्रारंभ और जबरन बंद के लिए सक्रिय Shizuku या रूट चाहिए।</string>
     <string name="custom_density">कस्टम घनत्व</string>
     <string name="custom_dpi">कस्टम DPI</string>
+    <string name="custom_rotation">रोटेशन</string>
+    <string name="rotation_note">यह केवल तब लागू होता है जब ऐप स्क्रीन पर हो। जो ऐप अपनी दिशा तय करते हैं वे इसे अनदेखा करते हैं।</string>
+    <string name="dpi_range">%1$d से %2$d dpi के बीच</string>
     <string name="custom_resolution">कस्टम रिज़ॉल्यूशन</string>
     <string name="width_short">चौड़ाई</string>
     <string name="height_short">ऊंचाई</string>

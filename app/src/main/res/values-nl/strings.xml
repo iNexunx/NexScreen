@@ -69,6 +69,9 @@
     <string name="restart_needs_backend">Openen werkt altijd; herstarten en geforceerd sluiten vereisen actieve Shizuku of root.</string>
     <string name="custom_density">Aangepaste dichtheid</string>
     <string name="custom_dpi">Aangepaste DPI</string>
+    <string name="custom_rotation">Rotatie</string>
+    <string name="rotation_note">Geldt alleen terwijl de app op het scherm staat. Apps met een eigen oriëntatie negeren dit.</string>
+    <string name="dpi_range">Tussen %1$d en %2$d dpi</string>
     <string name="custom_resolution">Aangepaste resolutie</string>
     <string name="width_short">Breedte</string>
     <string name="height_short">Hoogte</string>

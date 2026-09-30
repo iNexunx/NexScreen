@@ -69,6 +69,9 @@
     <string name="restart_needs_backend">Öffnen funktioniert immer; Neustart und erzwungenes Schließen benötigen Shizuku oder Root.</string>
     <string name="custom_density">Benutzerdefinierte Dichte</string>
     <string name="custom_dpi">Benutzerdefinierter DPI</string>
+    <string name="custom_rotation">Rotation</string>
+    <string name="rotation_note">Gilt nur, solange die App im Vordergrund ist. Apps mit eigener Ausrichtung ignorieren dies.</string>
+    <string name="dpi_range">Zwischen %1$d und %2$d dpi</string>
     <string name="custom_resolution">Benutzerdefinierte Auflösung</string>
     <string name="width_short">Breite</string>
     <string name="height_short">Höhe</string>

@@ -69,6 +69,9 @@
     <string name="restart_needs_backend">Open always works; restart and force close need Shizuku or root.</string>
     <string name="custom_density">Custom density</string>
     <string name="custom_dpi">Custom DPI</string>
+    <string name="custom_rotation">Rotation</string>
+    <string name="rotation_note">Only applies while the app is on screen. Apps that set their own orientation ignore it.</string>
+    <string name="dpi_range">Between %1$d and %2$d dpi</string>
     <string name="custom_resolution">Custom resolution</string>
     <string name="width_short">Width</string>
     <string name="height_short">Height</string>

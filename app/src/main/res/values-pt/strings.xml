@@ -69,6 +69,9 @@
     <string name="restart_needs_backend">Abrir sempre funciona; reiniciar e forçar fechamento precisam de Shizuku ou root ativo.</string>
     <string name="custom_density">Densidade personalizada</string>
     <string name="custom_dpi">DPI personalizado</string>
+    <string name="custom_rotation">Rotação</string>
+    <string name="rotation_note">Só se aplica enquanto o app está na tela. Apps que definem a própria orientação ignoram.</string>
+    <string name="dpi_range">Entre %1$d e %2$d dpi</string>
     <string name="custom_resolution">Resolução personalizada</string>
     <string name="width_short">Largura</string>
     <string name="height_short">Altura</string>

@@ -32,6 +32,8 @@ class ProfileService : Service() {
     private var originalsApplied = false
     private var originalDensity: Int? = null
     private var originalSize: Size? = null
+    private var originalRotation: Int? = null
+    private var originalsRotationCaptured = false
     private var lastTop: String? = null
     private var appliedApp: String? = null
     private var lastShellRefresh = 0L
@@ -134,6 +136,8 @@ class ProfileService : Service() {
                 if (!originalsApplied) {
                     originalDensity = wm.density()
                     originalSize = wm.size()
+                    originalRotation = wm.lockedRotation()
+                    originalsRotationCaptured = true
                     originalsApplied = true
                     saveOriginals()
                 }
@@ -179,6 +183,9 @@ class ProfileService : Service() {
                 wm.setSize(Size(profile.width, profile.height))
             }
         }
+        profile.rotation?.let { target ->
+            if (wm.lockedRotation() != target) wm.setRotation(target)
+        }
     }
 
     private suspend fun restoreOriginals(wm: WmController? = null) {
@@ -189,7 +196,12 @@ class ProfileService : Service() {
         }
         originalDensity?.let { controller.setDensity(it) }
         originalSize?.let { controller.setSize(it) }
+        // Se restaura siempre que se capturo el original, incluso si era null
+        // (giro libre): si no, la pantalla se queda bloqueada en la rotacion
+        // que pedia el perfil.
+        if (originalsRotationCaptured) controller.setRotation(originalRotation)
         originalsApplied = false
+        originalsRotationCaptured = false
         clearPersistedOriginals()
     }
 
@@ -200,6 +212,11 @@ class ProfileService : Service() {
                 putInt(KEY_W, it.w)
                 putInt(KEY_H, it.h)
             }
+            // -1 = el usuario tenia el giro libre. Hay que persistirlo aunque
+            // sea null, o al reiniciar el servicio no sabriamos si restaurarlo.
+            if (originalsRotationCaptured) {
+                putInt(KEY_ROTATION, originalRotation ?: ROTATION_FREE)
+            }
         }.apply()
     }
 
@@ -208,13 +225,19 @@ class ProfileService : Service() {
     }
 
     private suspend fun restorePersistedIfNeeded() {
-        if (!prefs.contains(KEY_DENSITY) && !prefs.contains(KEY_W)) return
+        if (!prefs.contains(KEY_DENSITY) && !prefs.contains(KEY_W) &&
+            !prefs.contains(KEY_ROTATION)
+        ) return
         if (AppShell.active == null) AppShell.refresh()
         val shell = AppShell.active ?: return
         val controller = WmController(shell)
         prefs.getInt(KEY_DENSITY, 0).takeIf { it > 0 }?.let { controller.setDensity(it) }
         if (prefs.contains(KEY_W) && prefs.contains(KEY_H)) {
             controller.setSize(Size(prefs.getInt(KEY_W, 0), prefs.getInt(KEY_H, 0)))
+        }
+        if (prefs.contains(KEY_ROTATION)) {
+            val stored = prefs.getInt(KEY_ROTATION, ROTATION_FREE)
+            controller.setRotation(if (stored == ROTATION_FREE) null else stored)
         }
         clearPersistedOriginals()
     }
@@ -252,6 +275,10 @@ class ProfileService : Service() {
         private const val KEY_DENSITY = "orig_density"
         private const val KEY_W = "orig_w"
         private const val KEY_H = "orig_h"
+        private const val KEY_ROTATION = "orig_rotation"
+
+        /** Centinela para "el usuario no tenia el giro bloqueado". */
+        private const val ROTATION_FREE = -1
 
         fun hasUsageAccess(context: Context): Boolean {
             val appOps = context.getSystemService(Context.APP_OPS_SERVICE) as android.app.AppOpsManager

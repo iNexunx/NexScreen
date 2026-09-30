@@ -69,6 +69,9 @@
     <string name="restart_needs_backend">Открытие работает всегда; перезапуск и принудительное закрытие требуют Shevery или root.</string>
     <string name="custom_density">Своя плотность</string>
     <string name="custom_dpi">Свой DPI</string>
+    <string name="custom_rotation">Поворот</string>
+    <string name="rotation_note">Действует, пока приложение на экране. Приложения со своей ориентацией игнорируют это.</string>
+    <string name="dpi_range">От %1$d до %2$d dpi</string>
     <string name="custom_resolution">Свое разрешение</string>
     <string name="width_short">Ширина</string>
     <string name="height_short">Высота</string>

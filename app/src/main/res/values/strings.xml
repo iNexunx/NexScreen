@@ -71,6 +71,9 @@
     <string name="restart_needs_backend">Abrir funciona siempre; reiniciar y forzar cierre necesitan Shevery o root activo.</string>
     <string name="custom_density">Densidad personalizada</string>
     <string name="custom_dpi">DPI personalizado</string>
+    <string name="custom_rotation">Rotación</string>
+    <string name="rotation_note">Solo se aplica mientras la app está en pantalla. Las apps que fijan su propia orientación la ignoran.</string>
+    <string name="dpi_range">Entre %1$d y %2$d dpi</string>
     <string name="custom_resolution">Resolución personalizada</string>
     <string name="width_short">Ancho</string>
     <string name="height_short">Alto</string>

@@ -69,6 +69,9 @@
     <string name="restart_needs_backend">الفتح يعمل دائمًا؛ إعادة التشغيل والإغلاق القسري يتطلبان Shizuku أو جذرًا نشطًا.</string>
     <string name="custom_density">كثافة مخصصة</string>
     <string name="custom_dpi">DPI مخصص</string>
+    <string name="custom_rotation">التدوير</string>
+    <string name="rotation_note">يُطبَّق فقط عندما يكون التطبيق على الشاشة. تتجاهله التطبيقات التي تضبط اتجاهها الخاص.</string>
+    <string name="dpi_range">بين %1$d و%2$d dpi</string>
     <string name="custom_resolution">دقة مخصصة</string>
     <string name="width_short">العرض</string>
     <string name="height_short">الارتفاع</string>

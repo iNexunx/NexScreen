@@ -69,6 +69,9 @@
     <string name="restart_needs_backend">打开始终有效；重启和强制关闭需要活动的 Shizuku 或 root。</string>
     <string name="custom_density">自定义密度</string>
     <string name="custom_dpi">自定义 DPI</string>
+    <string name="custom_rotation">旋转</string>
+    <string name="rotation_note">仅在应用位于前台时生效。自行设定方向的应用会忽略此设置。</string>
+    <string name="dpi_range">%1$d 到 %2$d dpi</string>
     <string name="custom_resolution">自定义分辨率</string>
     <string name="width_short">宽度</string>
     <string name="height_short">高度</string>

@@ -20,6 +20,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ScreenRotation
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.PlayArrow
@@ -137,8 +138,8 @@ fun AppsScreen(viewModel: AppsViewModel = viewModel()) {
                 initial = profiles[app.packageName],
                 backendReady = backendReady,
                 onBack = { editingApp = null },
-                onSave = { density, width, height ->
-                    viewModel.saveProfile(app.packageName, density, width, height)
+                onSave = { density, width, height, rotation ->
+                    viewModel.saveProfile(app.packageName, density, width, height, rotation)
                     editingApp = null
                 },
                 onRemove = {
@@ -416,6 +417,8 @@ private fun ProfileScreen(
     var sizeEnabled by remember { mutableStateOf(initial?.width != null || initial?.height != null) }
     var width by remember { mutableStateOf(initial?.width?.toString() ?: "") }
     var height by remember { mutableStateOf(initial?.height?.toString() ?: "") }
+    var rotationEnabled by remember { mutableStateOf(initial?.rotation != null) }
+    var rotation by remember { mutableStateOf(initial?.rotation ?: 1) }
 
     KeyboardScrollColumn(
         modifier = modifier,
@@ -527,8 +530,8 @@ private fun ProfileScreen(
                             AppSlider(
                                 value = density.toFloat(),
                                 onValueChange = { density = (it / 20).toInt() * 20 },
-                                valueRange = 160f..640f,
-                                steps = 23,
+                                valueRange = MIN_DPI_SLIDER.toFloat()..MAX_DPI.toFloat(),
+                                steps = 27,
                                 enabled = backendReady,
                             )
                             Text(stringResource(R.string.density_value, density), style = MaterialTheme.typography.labelLarge)
@@ -536,7 +539,7 @@ private fun ProfileScreen(
                                 modifier = Modifier.horizontalScroll(rememberScrollState()),
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                             ) {
-                                listOf(320, 360, 400, 440, 480, 520, 560).forEach { p ->
+                                DENSITY_PRESETS.forEach { p ->
                                     AppFilterChip(
                                         selected = density == p,
                                         onClick = { density = p },
@@ -549,13 +552,76 @@ private fun ProfileScreen(
                                 value = densityField,
                                 onValueChange = {
                                     densityField = it
-                                    it.toIntOrNull()?.let { v -> density = v.coerceIn(160, 640) }
+                                    it.toIntOrNull()?.let { v -> density = v.coerceIn(MIN_DPI, MAX_DPI) }
                                 },
                                 label = { Text(stringResource(R.string.custom_dpi)) },
+                                supportingText = {
+                                    Text(stringResource(R.string.dpi_range, MIN_DPI, MAX_DPI))
+                                },
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                                 singleLine = true,
                                 enabled = backendReady,
                                 modifier = Modifier.fillMaxWidth(),
+                            )
+                        }
+                    }
+                }
+            }
+
+            item(key = "rotation") {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                    ) {
+                        Row(
+                            modifier = Modifier.weight(1f),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ScreenRotation,
+                                contentDescription = null,
+                                modifier = Modifier.size(24.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                            Spacer(Modifier.width(16.dp))
+                            Text(
+                                stringResource(R.string.custom_rotation),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.SemiBold,
+                            )
+                        }
+                        ExpressiveSwitch(
+                            checked = rotationEnabled,
+                            onCheckedChange = { rotationEnabled = it },
+                            enabled = backendReady,
+                        )
+                    }
+                    AnimatedVisibility(visible = rotationEnabled) {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Row(
+                                modifier = Modifier.horizontalScroll(rememberScrollState()),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            ) {
+                                ROTATION_OPTIONS.forEach { opt ->
+                                    AppFilterChip(
+                                        selected = rotation == opt.value,
+                                        onClick = { rotation = opt.value },
+                                        enabled = backendReady,
+                                        label = { Text(opt.label) },
+                                    )
+                                }
+                            }
+                            Text(
+                                stringResource(R.string.rotation_note),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
                     }
@@ -636,6 +702,7 @@ private fun ProfileScreen(
                                 if (densityEnabled) density else null,
                                 if (sizeEnabled) width.toIntOrNull() else null,
                                 if (sizeEnabled) height.toIntOrNull() else null,
+                                if (rotationEnabled) rotation else null,
                             )
                         },
                         enabled = backendReady,
@@ -671,4 +738,36 @@ private fun ProfileScreen(
 private fun profileSummary(p: AppProfile): String = buildList {
     p.density?.let { add("${it}dpi") }
     if (p.width != null && p.height != null) add("${p.width}x${p.height}")
+    p.rotation?.let { add(rotationLabel(it)) }
 }.joinToString(" · ")
+
+/**
+ * `wm density` no impone un minimo real: acepta valores muy por debajo de
+ * ldpi (120). Por debajo de ~72 los layouts empiezan a romperse de verdad
+ * (campos de texto recortados, elementos solapados), asi que ahi paramos.
+ */
+private const val MIN_DPI = 72
+private const val MIN_DPI_SLIDER = 80
+private const val MAX_DPI = 640
+
+private val DENSITY_PRESETS = listOf(
+    72, 80, 100, 120, 140, 160, 200, 240, 280,
+    320, 360, 400, 440, 480, 520, 560, 640,
+)
+
+private fun rotationLabel(rotation: Int): String = when (rotation) {
+    0 -> "Vertical"
+    1 -> "Horizontal izquierda"
+    3 -> "Horizontal derecha"
+    2 -> "Invertida 180°"
+    else -> "Auto"
+}
+
+private data class RotationOption(val value: Int, val label: String)
+
+private val ROTATION_OPTIONS = listOf(
+    RotationOption(1, "Izquierda"),
+    RotationOption(3, "Derecha"),
+    RotationOption(0, "Vertical"),
+    RotationOption(2, "180°"),
+)

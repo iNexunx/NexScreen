@@ -69,6 +69,9 @@
     <string name="restart_needs_backend">Açma her zaman çalışır; yeniden başlatma ve zorla kapatma için etkin Shizuku veya root gerekir.</string>
     <string name="custom_density">Özel yoğunluk</string>
     <string name="custom_dpi">Özel DPI</string>
+    <string name="custom_rotation">Yönlendirme</string>
+    <string name="rotation_note">Yalnızca uygulama ekrandayken geçerlidir. Kendi yönlendirmesini ayarlayan uygulamalar bunu yok sayar.</string>
+    <string name="dpi_range">%1$d ile %2$d dpi arasında</string>
     <string name="custom_resolution">Özel çözünürlük</string>
     <string name="width_short">Genişlik</string>
     <string name="height_short">Yükseklik</string>
