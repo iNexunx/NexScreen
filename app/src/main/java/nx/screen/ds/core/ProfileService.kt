@@ -313,6 +313,26 @@ class ProfileService : Service() {
             val stored = prefs.getInt(KEY_ROTATION, ROTATION_FREE)
             controller.setRotation(if (stored == ROTATION_FREE) null else stored)
         }
+
+        // Ademas de aplicarlos, los dejamos cargados en memoria y marcamos
+        // que ya hay originales conocidos. Sin esto, applyForForeground podia
+        // capturar `wm density()` DESPUES de esta restauracion, leeria el
+        // override del perfil como si fuera el valor original del usuario y lo
+        // volveria a persistir: al salir de la app se restauraba el override
+        // en vez del valor real, que es justo el bug que esto arregla.
+        if (prefs.getInt(KEY_DENSITY, 0) > 0) {
+            originalDensity = prefs.getInt(KEY_DENSITY, 0)
+        }
+        if (prefs.contains(KEY_W) && prefs.contains(KEY_H)) {
+            originalSize = Size(prefs.getInt(KEY_W, 0), prefs.getInt(KEY_H, 0))
+        }
+        if (prefs.contains(KEY_ROTATION)) {
+            val stored = prefs.getInt(KEY_ROTATION, ROTATION_FREE)
+            originalRotation = if (stored == ROTATION_FREE) null else stored
+            originalsRotationCaptured = true
+        }
+        originalsApplied = true
+
         clearPersistedOriginals()
     }
 

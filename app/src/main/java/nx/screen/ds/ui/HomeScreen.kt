@@ -73,8 +73,6 @@ import nx.screen.ds.ui.theme.ShieldIcon
 import nx.screen.ds.ui.theme.SuperuserIcon
 import nx.screen.ds.ui.theme.statusGreen
 import nx.screen.ds.ui.theme.statusRed
-import nx.screen.ds.ui.theme.statusGreen
-import nx.screen.ds.ui.theme.statusRed
 import rikka.shizuku.Shizuku
 
 private enum class ResetKind { DENSITY, SIZE, SYSTEM }
@@ -818,7 +816,3 @@ fun GlassProgressBar(progress: Float, modifier: Modifier = Modifier) {
     }
 }
 
-private fun nx.screen.ds.core.Size.scale(f: Float): nx.screen.ds.core.Size {
-    val even = { v: Int -> if (v % 2 == 0) v else v - 1 }
-    return nx.screen.ds.core.Size(even((w * f).toInt()), even((h * f).toInt()))
-}
