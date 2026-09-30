@@ -13,7 +13,8 @@ import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import nx.screen.ds.R
 import nx.screen.ds.data.AppProfile
-import nx.screen.ds.data.AppProfileStoreimport kotlinx.coroutines.CoroutineScope
+import nx.screen.ds.data.AppProfileStore
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
