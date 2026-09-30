@@ -113,6 +113,9 @@ jobs:
               printf '\n%s\n' '> Para una release real hay que configurar los secretos `KEYSTORE_B64`, `STORE_PASSWORD`, `KEY_ALIAS` y `KEY_PASSWORD`.'
             } > "$NOTES"
           fi
+          # El runner no trae identidad de git, y `git tag -a` la necesita.
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           # Solo en dispatch creamos el tag. Si el workflow entra por
           # `push: tags: v*`, el tag ya existe y `git tag -a` fallaria.
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
