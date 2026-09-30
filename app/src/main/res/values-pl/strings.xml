@@ -81,6 +81,7 @@
     <string name="msg_force_stop_need_backend">Wymuszone zamknięcie wymaga aktywnego Shizuku lub roota</string>
     <string name="msg_restarted">%1$s uruchomiono ponownie</string>
     <string name="msg_restart_need_backend">Ponowne uruchomienie wymaga aktywnego Shizuku lub roota</string>
+    <string name="msg_action_failed">Operacja nie powiodła się: %1$s</string>
     <string name="ui_style">UI Style</string>
     <string name="ui_style_desc">Ogólny styl interfejsu</string>
     <string name="theme">Motyw</string>

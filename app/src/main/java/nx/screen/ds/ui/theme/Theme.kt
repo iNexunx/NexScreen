@@ -18,6 +18,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
@@ -204,12 +205,23 @@ fun AppOutlinedButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    compact: Boolean = false,
     content: @Composable RowScope.() -> Unit,
 ) {
     if (LocalUiSystem.current == UiSystem.MIUIX) {
-        MiuixOutlinedButton(onClick = onClick, modifier = modifier, enabled = enabled, content = content)
+        MiuixOutlinedButton(onClick, modifier, enabled, compact, content)
     } else {
-        OutlinedButton(onClick = onClick, modifier = modifier, enabled = enabled, content = content)
+        OutlinedButton(
+            onClick = onClick,
+            modifier = modifier,
+            enabled = enabled,
+            contentPadding = if (compact) {
+                ButtonDefaults.ContentPadding.copy(horizontal = 8.dp)
+            } else {
+                ButtonDefaults.ContentPadding
+            },
+            content = content,
+        )
     }
 }
 
@@ -277,6 +289,7 @@ private fun MiuixOutlinedButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    compact: Boolean = false,
     content: @Composable RowScope.() -> Unit,
 ) {
     val scheme = MaterialTheme.colorScheme
@@ -294,7 +307,11 @@ private fun MiuixOutlinedButton(
             ),
         ) {
             Row(
-                modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
+                modifier = if (compact) {
+                    Modifier.padding(horizontal = 8.dp, vertical = 12.dp)
+                } else {
+                    Modifier.padding(horizontal = 20.dp, vertical = 12.dp)
+                },
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically,
             ) {

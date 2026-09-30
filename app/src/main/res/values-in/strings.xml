@@ -81,6 +81,7 @@
     <string name="msg_force_stop_need_backend">Paksa tutup memerlukan Shizuku atau root aktif</string>
     <string name="msg_restarted">%1$s dimulai ulang</string>
     <string name="msg_restart_need_backend">Mulai ulang memerlukan Shizuku atau root aktif</string>
+    <string name="msg_action_failed">Tindakan gagal: %1$s</string>
     <string name="ui_style">Gaya UI</string>
     <string name="ui_style_desc">Gaya umum antarmuka</string>
     <string name="theme">Tema</string>

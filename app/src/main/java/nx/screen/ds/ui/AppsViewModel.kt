@@ -15,6 +15,7 @@ import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import nx.screen.ds.R
+import nx.screen.ds.core.AppActionResult
 import nx.screen.ds.core.AppActions
 import nx.screen.ds.core.AppShell
 import nx.screen.ds.core.ProfileService
@@ -149,6 +150,10 @@ class AppsViewModel(app: Application) : AndroidViewModel(app) {
             store.set(AppProfile(pkg, density, width, height, rotation))
             refreshUsageState()
             if (_usageAccess.value && !_serviceRunning.value) startService()
+            // La rotacion es un bloqueo global del sistema, no un ajuste con
+            // alcance por app, asi que no espera a que la app este delante:
+            // apagar el interruptor debe desbloquear el movil al momento.
+            ProfileService.applyRotationFromUi(rotation)
             val foreground = withContext(Dispatchers.IO) { isForeground(pkg) }
             if (foreground) {
                 val wm = AppShell.controller()
@@ -176,11 +181,8 @@ class AppsViewModel(app: Application) : AndroidViewModel(app) {
                 if (wm.setSize(target).isOk) changed = true else ok = false
             }
         }
-        profile.rotation?.let { target ->
-            if (wm.lockedRotation() != target) {
-                if (wm.setRotation(target).isOk) changed = true else ok = false
-            }
-        }
+        // La rotacion no se toca aqui: es global y persistente, la gestiona
+        // ProfileService.applyRotationFromUi al guardar el perfil.
         if (!ok) {
             _message.value = UiMessage(R.string.msg_apply_failed)
             return false
@@ -253,17 +255,25 @@ class AppsViewModel(app: Application) : AndroidViewModel(app) {
 
     fun forceStop(pkg: String) {
         viewModelScope.launch {
-            if (AppActions.forceStop(pkg)) _message.value = UiMessage(R.string.msg_force_stopped, pkg)
-            else _message.value = UiMessage(R.string.msg_force_stop_need_backend)
+            _message.value = when (val r = AppActions.forceStop(pkg)) {
+                AppActionResult.Ok -> UiMessage(R.string.msg_force_stopped, pkg)
+                AppActionResult.NoBackend -> UiMessage(R.string.msg_force_stop_need_backend)
+                is AppActionResult.Failed -> UiMessage(R.string.msg_action_failed, r.detail)
+            }
         }
     }
 
     fun restartApp(pkg: String) {
         viewModelScope.launch {
-            val stopped = AppActions.forceStop(pkg)
-            AppActions.open(getApplication(), pkg)
-            _message.value = if (stopped) UiMessage(R.string.msg_restarted, pkg)
-            else UiMessage(R.string.msg_restart_need_backend)
+            val stop = AppActions.forceStop(pkg)
+            val opened = AppActions.open(getApplication(), pkg)
+            _message.value = when (stop) {
+                AppActionResult.Ok -> if (opened) UiMessage(R.string.msg_restarted, pkg)
+                else UiMessage(R.string.msg_open_failed, pkg)
+
+                AppActionResult.NoBackend -> UiMessage(R.string.msg_restart_need_backend)
+                is AppActionResult.Failed -> UiMessage(R.string.msg_action_failed, stop.detail)
+            }
         }
     }
 

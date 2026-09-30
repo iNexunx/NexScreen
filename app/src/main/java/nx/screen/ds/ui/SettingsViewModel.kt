@@ -279,7 +279,10 @@ class SettingsViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun setAppDpi(dpi: Int?) = viewModelScope.launch {
-        store.update { it.copy(appDpi = dpi?.coerceIn(APP_DPI_MIN, APP_DPI_MAX)) }
+        // Sin rango imposed: el usuario escribe el valor a mano y este es el
+        // DPI de la propia interfaz. Solo se rechaza lo no positivo, que
+        // romperia el calculo de escala en MainActivity.
+        store.update { it.copy(appDpi = dpi?.takeIf { d -> d > 0 }) }
     }
 
     fun setAmoled(enabled: Boolean) = viewModelScope.launch {
@@ -511,8 +514,6 @@ class SettingsViewModel(app: Application) : AndroidViewModel(app) {
 
     companion object {
         private const val TAG = "SettingsVM"
-        const val APP_DPI_MIN = 120
-        const val APP_DPI_MAX = 640
         internal val sharedWallpaper = MutableStateFlow<WallpaperData?>(null)
         internal val sharedMusic = MutableStateFlow<MusicData?>(null)
     }

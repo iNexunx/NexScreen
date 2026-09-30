@@ -4,14 +4,12 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import androidx.compose.foundation.background
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -46,7 +44,6 @@ import nx.screen.ds.ui.component.SplicedColumnGroup
 import nx.screen.ds.ui.component.ToggleSettingCard
 import nx.screen.ds.ui.component.WarningCard
 import nx.screen.ds.ui.theme.AppFilterChip
-import nx.screen.ds.ui.theme.AppSlider
 import nx.screen.ds.ui.theme.AppTextButton
 import nx.screen.ds.ui.theme.AppsIcon
 import nx.screen.ds.ui.theme.AspectRatioIcon
@@ -381,16 +378,12 @@ private fun AppDpiRow(
 ) {
     var dpiText by remember { mutableStateOf(settings.appDpi?.toString().orEmpty()) }
     val context = LocalContext.current
-    val systemDpi = remember {
-        context.resources.displayMetrics.densityDpi
-            .coerceIn(SettingsViewModel.APP_DPI_MIN, SettingsViewModel.APP_DPI_MAX)
-    }
     LaunchedEffect(dpiText) {
         val v = dpiText.toIntOrNull()
         if (v != null) {
             delay(700)
             val current = dpiText.toIntOrNull()
-            if (current != null) viewModel.setAppDpi(current.coerceIn(SettingsViewModel.APP_DPI_MIN, SettingsViewModel.APP_DPI_MAX))
+            if (current != null) viewModel.setAppDpi(current)
         }
     }
     Column(
@@ -407,32 +400,14 @@ private fun AppDpiRow(
                 settings.appDpi?.toString() ?: stringResource(R.string.app_dpi_system),
             ),
         )
-        AppSlider(
-            value = (settings.appDpi ?: systemDpi).toFloat(),
-            onValueChange = { viewModel.setAppDpi((it / 10).toInt() * 10) },
-            valueRange = SettingsViewModel.APP_DPI_MIN.toFloat()..SettingsViewModel.APP_DPI_MAX.toFloat(),
-            steps = (SettingsViewModel.APP_DPI_MAX - SettingsViewModel.APP_DPI_MIN) / 10 - 1,
-        )
         AppOutlinedTextField(
             value = dpiText,
-            onValueChange = { new -> dpiText = new.filter { it.isDigit() } },
+            onValueChange = { new -> dpiText = new.filter { it.isDigit() }.take(9) },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             label = { Text(stringResource(R.string.app_dpi_hint)) },
         )
-        Row(
-            modifier = Modifier.horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            listOf(320, 360, 400, 411, 420, 440, 480, 560).forEach { dpi ->
-                AppFilterChip(
-                    selected = settings.appDpi == dpi,
-                    onClick = { viewModel.setAppDpi(dpi) },
-                    label = { Text("$dpi") },
-                )
-            }
-        }
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
             AppTextButton(onClick = { dpiText = ""; viewModel.setAppDpi(null) }) {
                 Text(stringResource(R.string.reset))

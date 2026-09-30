@@ -81,6 +81,7 @@
     <string name="msg_force_stop_need_backend">강제 종료에는 활성 Shizuku 또는 루트가 필요합니다</string>
     <string name="msg_restarted">%1$s 다시 시작됨</string>
     <string name="msg_restart_need_backend">다시 시작에는 활성 Shizuku 또는 루트가 필요합니다</string>
+    <string name="msg_action_failed">작업 실패: %1$s</string>
     <string name="ui_style">UI 스타일</string>
     <string name="ui_style_desc">인터페이스의 전반적인 스타일</string>
     <string name="theme">테마</string>

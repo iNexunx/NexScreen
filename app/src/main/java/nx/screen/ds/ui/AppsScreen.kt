@@ -448,39 +448,45 @@ private fun ProfileScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
-                        AppOutlinedButton(onClick = onOpen, modifier = Modifier.weight(1f)) {
+                        AppOutlinedButton(onClick = onOpen, compact = true, modifier = Modifier.weight(1f)) {
                             Icon(
                                 LaunchIcon,
                                 contentDescription = null,
-                                modifier = Modifier.size(18.dp),
+                                modifier = Modifier.size(16.dp),
                             )
                             Text(
                                 stringResource(R.string.open),
                                 style = MaterialTheme.typography.labelMedium,
+                                maxLines = 1,
+                                softWrap = false,
                                 modifier = Modifier.padding(start = 4.dp),
                             )
                         }
-                        AppOutlinedButton(onClick = onRestart, enabled = backendReady, modifier = Modifier.weight(1f)) {
+                        AppOutlinedButton(onClick = onRestart, enabled = backendReady, compact = true, modifier = Modifier.weight(1f)) {
                             Icon(
                                 Icons.Filled.Refresh,
                                 contentDescription = null,
-                                modifier = Modifier.size(18.dp),
+                                modifier = Modifier.size(16.dp),
                             )
                             Text(
                                 stringResource(R.string.restart),
                                 style = MaterialTheme.typography.labelMedium,
+                                maxLines = 1,
+                                softWrap = false,
                                 modifier = Modifier.padding(start = 4.dp),
                             )
                         }
-                        AppOutlinedButton(onClick = onForceStop, enabled = backendReady, modifier = Modifier.weight(1f)) {
+                        AppOutlinedButton(onClick = onForceStop, enabled = backendReady, compact = true, modifier = Modifier.weight(1f)) {
                             Icon(
                                 Icons.Filled.Close,
                                 contentDescription = null,
-                                modifier = Modifier.size(18.dp),
+                                modifier = Modifier.size(16.dp),
                             )
                             Text(
                                 stringResource(R.string.close),
                                 style = MaterialTheme.typography.labelMedium,
+                                maxLines = 1,
+                                softWrap = false,
                                 modifier = Modifier.padding(start = 4.dp),
                             )
                         }

@@ -32,8 +32,6 @@ class ProfileService : Service() {
     private var originalsApplied = false
     private var originalDensity: Int? = null
     private var originalSize: Size? = null
-    private var originalRotation: Int? = null
-    private var originalsRotationCaptured = false
 
     /**
      * Sondeos consecutivos que la app objetivo lleva sin estar en primer plano
@@ -60,6 +58,7 @@ class ProfileService : Service() {
         if (pollJob == null) {
             pollJob = scope.launch {
                 restorePersistedIfNeeded()
+                reapplyLockedRotation()
                 applyForForeground()
                 monitor()
             }
@@ -177,8 +176,6 @@ class ProfileService : Service() {
             if (!originalsApplied) {
                 originalDensity = wm.density()
                 originalSize = wm.size()
-                originalRotation = wm.lockedRotation()
-                originalsRotationCaptured = true
                 originalsApplied = true
                 saveOriginals()
             }
@@ -236,11 +233,36 @@ class ProfileService : Service() {
                 if (wm.size() != target) wm.setSize(target).also { logResult("size ${target.w}x${target.h}", it) }
             }.onFailure { logFailure("size", it) }
         }
-        profile.rotation?.let { target ->
-            runCatching {
+        // La rotacion NO se restaura al salir: el usuario quiere que se
+        // mantenga bloqueada en la orientacion que eligio. Antes se revertia
+        // junto con la densidad, y eso hacia que en cuanto ibas a otra app
+        // perdias el ajuste.
+        // Desbloquear es explicito: se hace desde el interruptor de rotacion
+        // del perfil, que pone profile.rotation = null (ver setLockedRotation).
+        setLockedRotation(profile.rotation, wm)
+    }
+
+    /**
+     * Aplica la rotacion elegida, o la deja libre si el perfil ya no la pide.
+     *
+     * Se guarda que rotacion pusimos nosotros ([KEY_LOCKED_ROTATION]) para
+     * poder distinguira de un bloqueo que ya tuviera el usuario. Sin eso no
+     * habria forma de saber si hay que hacer `wm user-rotation free` al
+     * desactivar el interruptor, o si solo habria que dejar su bloqueo intacto.
+     */
+    private suspend fun setLockedRotation(target: Int?, wm: WmController) {
+        runCatching {
+            if (target != null) {
                 if (wm.lockedRotation() != target) wm.setRotation(target).also { logResult("rotation $target", it) }
-            }.onFailure { logFailure("rotation", it) }
-        }
+                prefs.edit().putInt(KEY_LOCKED_ROTATION, target).apply()
+            } else {
+                val ours = prefs.getInt(KEY_LOCKED_ROTATION, -1)
+                if (ours >= 0) {
+                    if (wm.lockedRotation() != null) wm.setRotation(null).also { logResult("rotation free", it) }
+                    prefs.edit().remove(KEY_LOCKED_ROTATION).apply()
+                }
+            }
+        }.onFailure { logFailure("rotation", it) }
     }
 
     private fun logResult(what: String, result: CommandResult) {
@@ -261,12 +283,9 @@ class ProfileService : Service() {
         }
         originalDensity?.let { controller.setDensity(it) }
         originalSize?.let { controller.setSize(it) }
-        // Se restaura siempre que se capturo el original, incluso si era null
-        // (giro libre): si no, la pantalla se queda bloqueada en la rotacion
-        // que pedia el perfil.
-        if (originalsRotationCaptured) controller.setRotation(originalRotation)
+        // La rotacion se deja como esta: es un ajuste que el usuario quiere
+        // mantener, no algo que deba revertirse al salir de la app.
         originalsApplied = false
-        originalsRotationCaptured = false
         clearPersistedOriginals()
     }
 
@@ -277,16 +296,41 @@ class ProfileService : Service() {
                 putInt(KEY_W, it.w)
                 putInt(KEY_H, it.h)
             }
-            // -1 = el usuario tenia el giro libre. Hay que persistirlo aunque
-            // sea null, o al reiniciar el servicio no sabriamos si restaurarlo.
-            if (originalsRotationCaptured) {
-                putInt(KEY_ROTATION, originalRotation ?: ROTATION_FREE)
-            }
         }.apply()
     }
 
+    /**
+     * Borra solo los originales de densidad y tamano.
+     *
+     * No se puede usar `clear()` a pelo: este mismo prefs guarda tambien
+     * KEY_LOCKED_ROTATION, y un clear() dejaria el movil bloqueado en la
+     * orientacion elegida sin ningun rastro de que la pusimos nosotros, con
+     * lo que ya no habria forma de desbloquearlo desde la app.
+     */
     private fun clearPersistedOriginals() {
-        prefs.edit().clear().apply()
+        prefs.edit()
+            .remove(KEY_DENSITY)
+            .remove(KEY_W)
+            .remove(KEY_H)
+            .apply()
+    }
+
+    /**
+     * Reafirma la rotacion que elegimos, por si el servicio se reinicio.
+     *
+     * `wm user-rotation lock` es estado del sistema: sobrevive a que pare la
+     * app, pero un reinicio del movil lo deja en `free`. Sin esto, el usuario
+     * perdiaba el ajuste sin previo aviso.
+     */
+    private suspend fun reapplyLockedRotation() {
+        val stored = prefs.getInt(KEY_LOCKED_ROTATION, -1)
+        if (stored < 0) return
+        if (AppShell.active == null) AppShell.refresh()
+        val shell = AppShell.active ?: return
+        val wm = WmController(shell)
+        runCatching {
+            if (wm.lockedRotation() != stored) wm.setRotation(stored).also { logResult("rotation $stored", it) }
+        }.onFailure { logFailure("rotation", it) }
     }
 
     /**
@@ -299,9 +343,7 @@ class ProfileService : Service() {
      * el bucle de sondeo los reintenta en cuanto vuelve el backend.
      */
     private suspend fun restorePersistedIfNeeded() {
-        if (!prefs.contains(KEY_DENSITY) && !prefs.contains(KEY_W) &&
-            !prefs.contains(KEY_ROTATION)
-        ) return
+        if (!prefs.contains(KEY_DENSITY) && !prefs.contains(KEY_W)) return
         if (AppShell.active == null) AppShell.refresh()
         val shell = AppShell.active ?: return
         val controller = WmController(shell)
@@ -309,10 +351,7 @@ class ProfileService : Service() {
         if (prefs.contains(KEY_W) && prefs.contains(KEY_H)) {
             controller.setSize(Size(prefs.getInt(KEY_W, 0), prefs.getInt(KEY_H, 0)))
         }
-        if (prefs.contains(KEY_ROTATION)) {
-            val stored = prefs.getInt(KEY_ROTATION, ROTATION_FREE)
-            controller.setRotation(if (stored == ROTATION_FREE) null else stored)
-        }
+        // La rotacion no se restaura: es persistente a proposito.
 
         // Ademas de aplicarlos, los dejamos cargados en memoria y marcamos
         // que ya hay originales conocidos. Sin esto, applyForForeground podia
@@ -326,11 +365,6 @@ class ProfileService : Service() {
         if (prefs.contains(KEY_W) && prefs.contains(KEY_H)) {
             originalSize = Size(prefs.getInt(KEY_W, 0), prefs.getInt(KEY_H, 0))
         }
-        if (prefs.contains(KEY_ROTATION)) {
-            val stored = prefs.getInt(KEY_ROTATION, ROTATION_FREE)
-            originalRotation = if (stored == ROTATION_FREE) null else stored
-            originalsRotationCaptured = true
-        }
         originalsApplied = true
 
         clearPersistedOriginals()
@@ -338,7 +372,7 @@ class ProfileService : Service() {
 
     /** Quedan originales pendientes de restaurar en disco? */
     private fun hasPendingOriginals(): Boolean =
-        prefs.contains(KEY_DENSITY) || prefs.contains(KEY_W) || prefs.contains(KEY_ROTATION)
+        prefs.contains(KEY_DENSITY) || prefs.contains(KEY_W)
 
     private fun getForegroundPackage(): String? {
         return runCatching {
@@ -367,6 +401,38 @@ class ProfileService : Service() {
 
     companion object {
         private const val TAG = "NexScreenProfile"
+        private const val PREFS_NAME = "profile_service"
+        private const val KEY_LOCKED_ROTATION = "locked_rotation"
+
+        /**
+         * Aplica o libera la rotacion desde la UI, sin esperar al servicio.
+         *
+         * `wm user-rotation lock` es estado global del sistema, no un ajuste con
+         * alcance por app. Por eso el interruptor de rotacion tiene que tener
+         * efecto inmediato: si solo se aplicara cuando la app objetivo esta en primer
+         * plano, apagar el interruptor no desbloquearia el movil hasta que
+         * abrieras esa app, y el usuario se queda sin salida.
+         *
+         * Solo liberamos el bloqueo si lo puso la app (queda en [KEY_LOCKED_ROTATION]);
+         * un bloqueo previo del usuario se respeta intacto.
+         */
+        suspend fun applyRotationFromUi(rotation: Int?) {
+            if (AppShell.active == null) AppShell.refresh(force = true)
+            val wm = AppShell.controller() ?: return
+            val prefs = AppShell.appContextOrNull
+                ?.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE) ?: return
+            runCatching {
+                if (rotation != null) {
+                    if (wm.lockedRotation() != rotation) wm.setRotation(rotation)
+                    prefs.edit().putInt(KEY_LOCKED_ROTATION, rotation).apply()
+                } else if (prefs.getInt(KEY_LOCKED_ROTATION, -1) >= 0) {
+                    if (wm.lockedRotation() != null) wm.setRotation(null)
+                    prefs.edit().remove(KEY_LOCKED_ROTATION).apply()
+                }
+            }.onFailure {
+                android.util.Log.w(TAG, "rotation fallo: ${it.message}")
+            }
+        }
         private const val CHANNEL_ID = "profile_service"
         private const val NOTIFICATION_ID = 1
         private const val POLL_MS = 1000L
@@ -376,10 +442,6 @@ class ProfileService : Service() {
         private const val KEY_DENSITY = "orig_density"
         private const val KEY_W = "orig_w"
         private const val KEY_H = "orig_h"
-        private const val KEY_ROTATION = "orig_rotation"
-
-        /** Centinela para "el usuario no tenia el giro bloqueado". */
-        private const val ROTATION_FREE = -1
 
         fun hasUsageAccess(context: Context): Boolean {
             val appOps = context.getSystemService(Context.APP_OPS_SERVICE) as android.app.AppOpsManager

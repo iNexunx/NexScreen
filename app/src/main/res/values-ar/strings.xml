@@ -81,6 +81,7 @@
     <string name="msg_force_stop_need_backend">الإغلاق القسري يتطلب Shizuku أو جذرًا نشطًا</string>
     <string name="msg_restarted">تمت إعادة تشغيل %1$s</string>
     <string name="msg_restart_need_backend">إعادة التشغيل تتطلب Shizuku أو جذرًا نشطًا</string>
+    <string name="msg_action_failed">فشل الإجراء: %1$s</string>
     <string name="ui_style">نمط الواجهة</string>
     <string name="ui_style_desc">النمط العام للواجهة</string>
     <string name="theme">المظهر</string>

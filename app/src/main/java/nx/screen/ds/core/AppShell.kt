@@ -76,6 +76,15 @@ object AppShell {
     val active: Shell?
         get() = activeBackend
 
+    /**
+     * Contexto de la aplicacion, disponible tras [init].
+     *
+     * Lo consultan partes que no son el servicio (por ejemplo la UI al aplicar
+     * la rotacion) y necesitan leer las mismas SharedPreferences que este.
+     */
+    val appContextOrNull: Context?
+        get() = if (::appContext.isInitialized) appContext else null
+
     /** Each activation method is a separate, reusable detection function. */
     suspend fun detectRoot(): Boolean = root.available()
 

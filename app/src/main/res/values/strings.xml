@@ -83,6 +83,7 @@
     <string name="msg_force_stop_need_backend">Forzar cierre necesita Shevery o root activo</string>
     <string name="msg_restarted">%1$s reiniciada</string>
     <string name="msg_restart_need_backend">Reiniciar necesita Shevery o root activo</string>
+    <string name="msg_action_failed">Acción fallida: %1$s</string>
     <string name="ui_style">UI Style</string>
     <string name="ui_style_desc">Estilo general de la interfaz</string>
     <string name="theme">Theme</string>

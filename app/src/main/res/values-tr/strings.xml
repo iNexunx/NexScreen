@@ -81,6 +81,7 @@
     <string name="msg_force_stop_need_backend">Zorla kapatma için etkin Shizuku veya root gerekir</string>
     <string name="msg_restarted">%1$s yeniden başlatıldı</string>
     <string name="msg_restart_need_backend">Yeniden başlatma için etkin Shizuku veya root gerekir</string>
+    <string name="msg_action_failed">İşlem başarısız: %1$s</string>
     <string name="ui_style">UI Stili</string>
     <string name="ui_style_desc">Arayüzün genel stili</string>
     <string name="theme">Tema</string>

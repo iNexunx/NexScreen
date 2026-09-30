@@ -81,6 +81,7 @@
     <string name="msg_force_stop_need_backend">Force close needs Shizuku or root</string>
     <string name="msg_restarted">%1$s restarted</string>
     <string name="msg_restart_need_backend">Restart needs Shizuku or root</string>
+    <string name="msg_action_failed">Action failed: %1$s</string>
     <string name="ui_style">UI Style</string>
     <string name="ui_style_desc">General interface style</string>
     <string name="theme">Theme</string>

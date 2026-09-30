@@ -81,6 +81,7 @@
     <string name="msg_force_stop_need_backend">Принудительное закрытие требует Shevery или root</string>
     <string name="msg_restarted">%1$s перезапущено</string>
     <string name="msg_restart_need_backend">Перезапуск требует Shevery или root</string>
+    <string name="msg_action_failed">Не удалось выполнить: %1$s</string>
     <string name="ui_style">UI Style</string>
     <string name="ui_style_desc">Общий стиль интерфейса</string>
     <string name="theme">Тема</string>
