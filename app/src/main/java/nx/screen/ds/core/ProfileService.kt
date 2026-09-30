@@ -34,7 +34,14 @@ class ProfileService : Service() {
     private var originalSize: Size? = null
     private var originalRotation: Int? = null
     private var originalsRotationCaptured = false
-    private var lastTop: String? = null
+
+    /**
+     * Sondeos consecutivos que la app objetivo lleva sin estar en primer plano
+     * antes de restaurar. Dos a POLL_MS = 1 s bastan para absorbing un fallo
+     * puntual de la consulta de uso sin meter un parpadeo al restaurar.
+     */
+    private var awayPolls = 0
+    private var lastPidofMs = 0L
     private var appliedApp: String? = null
     private var lastShellRefresh = 0L
 
@@ -111,65 +118,94 @@ class ProfileService : Service() {
         }
     }
 
+    /**
+     * Aplica el perfil de la app en primer plano y restaura los originales en
+     * cuanto deja de estarlo.
+     *
+     * La clave es que la restauracion NO depende de que el proceso muera: se
+     * dispara porque la app objetivo ya no es la de primer plano. Depender de
+     * la muerte del proceso dejaba la densidad y la rotacion puestas
+     * indefinidamente (pulsar Inicio no restaura nada, porque el proceso sigue
+     * vivo en segundo plano).
+     */
     private suspend fun applyForForeground() {
         if (AppShell.active == null && System.currentTimeMillis() - lastShellRefresh > 5000) {
             lastShellRefresh = System.currentTimeMillis()
             AppShell.refresh()
         }
         val shell = AppShell.active ?: return
-        val top = getForegroundPackage() ?: return
         val wm = WmController(shell)
+        val top = getForegroundPackage()
 
-        if (top == packageName) {
-            val current = appliedApp
-            if (current != null && wasClosed(current)) {
-                restoreOriginals(wm)
-                appliedApp = null
+        val target = appliedApp
+        if (target != null) {
+            // top == null significa que no sabemos quien esta delante. Ante la
+            // duda, tratamos la app objetivo como no-activa: es preferible
+            // devolver el móvil a su estado normal (molesto, recuperable) que
+            // dejarlo con la densidad o la pantalla girada (inservible).
+            val notInForeground = top == null || top != target
+            if (notInForeground || processGoneThrottled(target)) {
+                awayPolls++
+                if (awayPolls >= AWAY_POLLS_BEFORE_RESTORE) {
+                    restoreOriginals(wm)
+                    appliedApp = null
+                    awayPolls = 0
+                }
+            } else {
+                awayPolls = 0
+                // Algo externo puede haber tocado la densidad (el usuario la
+                // cambio en Ajustes, o el sistema la reseto). Reafirmamos.
+                val profile = store.get(target)
+                if (!profile.isEmpty() && originalsApplied) applyProfile(wm, profile)
             }
-            lastTop = top
             return
         }
+
+        if (top == null || top == packageName) return
 
         val profile = store.get(top)
         if (!profile.isEmpty()) {
-            if (appliedApp != top) {
-                if (!originalsApplied) {
-                    originalDensity = wm.density()
-                    originalSize = wm.size()
-                    originalRotation = wm.lockedRotation()
-                    originalsRotationCaptured = true
-                    originalsApplied = true
-                    saveOriginals()
-                }
-                applyProfile(wm, profile)
-                appliedApp = top
+            if (!originalsApplied) {
+                originalDensity = wm.density()
+                originalSize = wm.size()
+                originalRotation = wm.lockedRotation()
+                originalsRotationCaptured = true
+                originalsApplied = true
+                saveOriginals()
             }
-            lastTop = top
-            return
+            applyProfile(wm, profile)
+            appliedApp = top
+            awayPolls = 0
         }
-
-        if (appliedApp == null) {
-            lastTop = top
-            return
-        }
-
-        if (wasClosed(appliedApp!!)) {
-            restoreOriginals(wm)
-            appliedApp = null
-        }
-        lastTop = top
     }
 
-    private suspend fun wasClosed(pkg: String): Boolean {
-        val shell = AppShell.active
-        if (shell != null) {
-            val result = runCatching { shell.run("pidof $pkg") }.getOrNull()
-            if (result != null && result.code == 0) return result.stdout.isBlank()
-            if (result != null && result.code == 1) return true
+    /**
+     * `pidof` lanza un proceso shell, asi que no puede ir en cada sondeo.
+     * Es solo una via de escape para cuando la consulta de uso dice que la app
+     * sigue delante pero en realidad esta muerta; el caso normal lo cubre
+     * `top != target`.
+     */
+    private suspend fun processGoneThrottled(pkg: String): Boolean {
+        val now = System.currentTimeMillis()
+        if (now - lastPidofMs < PIDOF_INTERVAL_MS) return false
+        lastPidofMs = now
+        return processGone(pkg)
+    }
+
+    /**
+     * Comprobacion rapida para el caso de "forzar cierre" desde Ajustes, que no
+     * genera ningun evento de primer plano. Si `pidof` no existe (code 127 en
+     * algunas ROM) devolvemos false en vez de asumir: antes ese caso caia en un
+     * heuristico basado en lastTop que podia no restaurar nunca.
+     */
+    private suspend fun processGone(pkg: String): Boolean {
+        val shell = AppShell.active ?: return false
+        val result = runCatching { shell.run("pidof $pkg") }.getOrNull() ?: return false
+        return when (result.code) {
+            0 -> result.stdout.isBlank()
+            1 -> true
+            else -> false
         }
-        val last = lastTop
-        if (last == null || last == pkg) return false
-        return true
     }
 
     private suspend fun applyProfile(wm: WmController, profile: AppProfile) {
@@ -271,6 +307,8 @@ class ProfileService : Service() {
         private const val CHANNEL_ID = "profile_service"
         private const val NOTIFICATION_ID = 1
         private const val POLL_MS = 1000L
+        private const val AWAY_POLLS_BEFORE_RESTORE = 2
+        private const val PIDOF_INTERVAL_MS = 3000L
         private const val EVENT_WINDOW_MS = 10_000L
         private const val KEY_DENSITY = "orig_density"
         private const val KEY_W = "orig_w"
