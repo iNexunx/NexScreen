@@ -70,7 +70,7 @@
     <string name="custom_density">Densità personalizzata</string>
     <string name="custom_dpi">DPI personalizzato</string>
     <string name="custom_rotation">Rotazione</string>
-    <string name="rotation_note">Vale solo mentre l'app è a schermo. Le app che impostano il proprio orientamento lo ignorano.</string>
+    <string name="rotation_note">Vale solo mentre l\'app è a schermo. Le app che impostano il proprio orientamento lo ignorano.</string>
     <string name="dpi_range">Tra %1$d e %2$d dpi</string>
     <string name="custom_resolution">Risoluzione personalizzata</string>
     <string name="width_short">Larghezza</string>
