@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
@@ -216,7 +217,7 @@ fun AppOutlinedButton(
             modifier = modifier,
             enabled = enabled,
             contentPadding = if (compact) {
-                ButtonDefaults.ContentPadding.copy(horizontal = 8.dp)
+                PaddingValues(horizontal = 8.dp, vertical = 8.dp)
             } else {
                 ButtonDefaults.ContentPadding
             },
