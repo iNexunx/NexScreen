@@ -81,10 +81,20 @@ object AppShell {
 
     suspend fun detectShizuku(): Boolean = shizuku.available()
 
+    /**
+     * AUTO = Shizuku primero, root solo como respaldo.
+     *
+     * Shizuku corre sobre adb y no deja el dispositivo con root, así que es
+     * el camino de menor privilegio. Antes se probaba root primero, y eso
+     * significa que bastaba con tener root en el móvil —aunque fuera por
+     * motivos ajenos a esta app— para que todos los cambios se aplicaran
+     * por root sin haberlo elegido. Root queda disponible, pero hay que
+     * pedirlo explícitamente con [BackendMode.ROOT].
+     */
     fun preferredOrder(): List<Shell> = when (preferMode) {
         BackendMode.ROOT.name -> listOf(root)
         BackendMode.SHIZUKU.name -> listOf(shizuku)
-        else -> listOf(root, shizuku)
+        else -> listOf(shizuku, root)
     }
 
     /**
