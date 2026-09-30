@@ -34,12 +34,10 @@
     <string name="reset">Rétablir</string>
     <string name="density_current">Actuelle : %1$d (physique : %2$s)</string>
     <string name="unknown">Inconnue</string>
-    <string name="density_value">%1$d dpi</string>
     <string name="custom_value">Valeur personnalisée</string>
     <string name="apply">Appliquer</string>
     <string name="resolution_title">Résolution</string>
     <string name="resolution_current">Actuelle : %1$s (physique : %2$s)</string>
-    <string name="preset_native">Native</string>
     <string name="width_field">Largeur (px)</string>
     <string name="height_field">Hauteur (px)</string>
     <string name="apply_resolution">Appliquer la résolution</string>
@@ -71,7 +69,6 @@
     <string name="custom_dpi">DPI personnalisé</string>
     <string name="custom_rotation">Rotation</string>
     <string name="rotation_note">S\'applique uniquement tant que l\'app est à l\'écran. Les apps qui fixent leur propre orientation l\'ignorent.</string>
-    <string name="dpi_range">Entre %1$d et %2$d dpi</string>
     <string name="custom_resolution">Résolution personnalisée</string>
     <string name="width_short">Largeur</string>
     <string name="height_short">Hauteur</string>

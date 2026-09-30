@@ -34,12 +34,10 @@
     <string name="reset">Сбросить</string>
     <string name="density_current">Текущая: %1$d (физическая: %2$s)</string>
     <string name="unknown">Неизвестно</string>
-    <string name="density_value">%1$d dpi</string>
     <string name="custom_value">Свое значение</string>
     <string name="apply">Применить</string>
     <string name="resolution_title">Разрешение</string>
     <string name="resolution_current">Текущее: %1$s (физическое: %2$s)</string>
-    <string name="preset_native">Нативное</string>
     <string name="width_field">Ширина (px)</string>
     <string name="height_field">Высота (px)</string>
     <string name="apply_resolution">Применить разрешение</string>
@@ -71,7 +69,6 @@
     <string name="custom_dpi">Свой DPI</string>
     <string name="custom_rotation">Поворот</string>
     <string name="rotation_note">Действует, пока приложение на экране. Приложения со своей ориентацией игнорируют это.</string>
-    <string name="dpi_range">От %1$d до %2$d dpi</string>
     <string name="custom_resolution">Свое разрешение</string>
     <string name="width_short">Ширина</string>
     <string name="height_short">Высота</string>

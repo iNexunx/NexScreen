@@ -34,12 +34,10 @@
     <string name="reset">Zurücksetzen</string>
     <string name="density_current">Aktuell: %1$d (physisch: %2$s)</string>
     <string name="unknown">Unbekannt</string>
-    <string name="density_value">%1$d dpi</string>
     <string name="custom_value">Benutzerdefinierter Wert</string>
     <string name="apply">Übernehmen</string>
     <string name="resolution_title">Auflösung</string>
     <string name="resolution_current">Aktuell: %1$s (physisch: %2$s)</string>
-    <string name="preset_native">Nativ</string>
     <string name="width_field">Breite (px)</string>
     <string name="height_field">Höhe (px)</string>
     <string name="apply_resolution">Auflösung übernehmen</string>
@@ -71,7 +69,6 @@
     <string name="custom_dpi">Benutzerdefinierter DPI</string>
     <string name="custom_rotation">Rotation</string>
     <string name="rotation_note">Gilt nur, solange die App im Vordergrund ist. Apps mit eigener Ausrichtung ignorieren dies.</string>
-    <string name="dpi_range">Zwischen %1$d und %2$d dpi</string>
     <string name="custom_resolution">Benutzerdefinierte Auflösung</string>
     <string name="width_short">Breite</string>
     <string name="height_short">Höhe</string>

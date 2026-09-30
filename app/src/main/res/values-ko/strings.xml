@@ -34,12 +34,10 @@
     <string name="reset">초기화</string>
     <string name="density_current">현재: %1$d (실제: %2$s)</string>
     <string name="unknown">알 수 없음</string>
-    <string name="density_value">%1$d dpi</string>
     <string name="custom_value">사용자 지정 값</string>
     <string name="apply">적용</string>
     <string name="resolution_title">해상도</string>
     <string name="resolution_current">현재: %1$s (실제: %2$s)</string>
-    <string name="preset_native">기본</string>
     <string name="width_field">너비(px)</string>
     <string name="height_field">높이(px)</string>
     <string name="apply_resolution">해상도 적용</string>
@@ -71,7 +69,6 @@
     <string name="custom_dpi">사용자 지정 DPI</string>
     <string name="custom_rotation">회전</string>
     <string name="rotation_note">앱이 화면에 있을 때만 적용됩니다. 자체 방향을 지정하는 앱은 이를 무시합니다.</string>
-    <string name="dpi_range">%1$d ~ %2$d dpi</string>
     <string name="custom_resolution">사용자 지정 해상도</string>
     <string name="width_short">너비</string>
     <string name="height_short">높이</string>

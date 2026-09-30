@@ -5,13 +5,13 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -59,7 +59,6 @@ import nx.screen.ds.ui.component.SplicedColumnGroup
 import nx.screen.ds.ui.theme.AppButton
 import nx.screen.ds.ui.theme.AppFilterChip
 import nx.screen.ds.ui.theme.AppOutlinedButton
-import nx.screen.ds.ui.theme.AppSlider
 import nx.screen.ds.ui.theme.statusGreen
 import nx.screen.ds.ui.theme.statusRed
 import nx.screen.ds.ui.theme.AppTextButton
@@ -151,16 +150,22 @@ fun AppsScreen(viewModel: AppsViewModel = viewModel()) {
                 onForceStop = { viewModel.forceStop(app.packageName) },
             )
         } else {
-            Column(
+            // Un unico LazyColumn para toda la pantalla. Antes esto era un
+            // Column(fillMaxSize) sin scroll que envolvia a su vez otro
+            // LazyColumn: el contenido alto se recortaba y no habia forma de
+            // llegar al final, y el scroll anidado competia por el gesto.
+            LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(innerPadding)
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+                    .padding(innerPadding),
+                contentPadding = PaddingValues(16.dp),
             ) {
-                ScreenTitle(stringResource(R.string.tab_apps))
+                item(key = "title") {
+                    ScreenTitle(stringResource(R.string.tab_apps))
+                }
 
-                SplicedColumnGroup {
+                item(key = "group") {
+                    SplicedColumnGroup {
                     item(key = "auto") {
                         Column(
                             modifier = Modifier
@@ -280,36 +285,36 @@ fun AppsScreen(viewModel: AppsViewModel = viewModel()) {
                         }
                     }
                 }
+                }
 
-                AppOutlinedTextField(
-                    value = query,
-                    onValueChange = { viewModel.setQuery(it) },
-                    label = { Text(stringResource(R.string.search_app)) },
-                    leadingIcon = {
-                        Icon(Icons.Filled.Search, contentDescription = null)
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                )
+                item(key = "search") {
+                    AppOutlinedTextField(
+                        value = query,
+                        onValueChange = { viewModel.setQuery(it) },
+                        label = { Text(stringResource(R.string.search_app)) },
+                        leadingIcon = {
+                            Icon(Icons.Filled.Search, contentDescription = null)
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
 
                 if (apps.isEmpty()) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(top = 32.dp),
-                        horizontalArrangement = Arrangement.Center,
-                    ) {
-                        CircularProgressIndicator()
+                    item(key = "loading") {
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(top = 32.dp),
+                            horizontalArrangement = Arrangement.Center,
+                        ) {
+                            CircularProgressIndicator()
+                        }
                     }
                 } else {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxWidth().heightIn(min = 200.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        items(filtered, key = { it.packageName }) { app ->
-                            AppRow(
-                                app = app,
-                                profile = profiles[app.packageName],
-                                onClick = ({ editingApp = app }).takeIf { backendReady },
-                            )
-                        }
+                    items(filtered, key = { it.packageName }) { app ->
+                        AppRow(
+                            app = app,
+                            profile = profiles[app.packageName],
+                            onClick = ({ editingApp = app }).takeIf { backendReady },
+                        )
                     }
                 }
             }
@@ -526,44 +531,25 @@ private fun ProfileScreen(
                         )
                     }
                     AnimatedVisibility(visible = densityEnabled) {
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            AppSlider(
-                                value = density.toFloat(),
-                                onValueChange = { density = (it / 20).toInt() * 20 },
-                                valueRange = MIN_DPI_SLIDER.toFloat()..MAX_DPI.toFloat(),
-                                steps = 27,
-                                enabled = backendReady,
-                            )
-                            Text(stringResource(R.string.density_value, density), style = MaterialTheme.typography.labelLarge)
-                            Row(
-                                modifier = Modifier.horizontalScroll(rememberScrollState()),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            ) {
-                                DENSITY_PRESETS.forEach { p ->
-                                    AppFilterChip(
-                                        selected = density == p,
-                                        onClick = { density = p },
-                                        enabled = backendReady,
-                                        label = { Text("$p") },
-                                    )
-                                }
-                            }
-                            AppOutlinedTextField(
-                                value = densityField,
-                                onValueChange = {
-                                    densityField = it
-                                    it.toIntOrNull()?.let { v -> density = v.coerceIn(MIN_DPI, MAX_DPI) }
-                                },
-                                label = { Text(stringResource(R.string.custom_dpi)) },
-                                supportingText = {
-                                    Text(stringResource(R.string.dpi_range, MIN_DPI, MAX_DPI))
-                                },
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                singleLine = true,
-                                enabled = backendReady,
-                                modifier = Modifier.fillMaxWidth(),
-                            )
-                        }
+                        // Solo entrada manual. No hay slider ni presets: el valor
+                        // va tal cual a `wm density`, que es quien decide si lo
+                        // acepta. Filtramos a digitos para no mandar basura, pero
+                        // no limitamos el rango mas alla del entero de 32 bits.
+                        AppOutlinedTextField(
+                            value = densityField,
+                            onValueChange = { input ->
+                                val digits = input.filter(Char::isDigit).take(9)
+                                densityField = digits
+                                digits.toIntOrNull()
+                                    ?.takeIf { it > 0 }
+                                    ?.let { density = it }
+                            },
+                            label = { Text(stringResource(R.string.custom_dpi)) },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            singleLine = true,
+                            enabled = backendReady,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
                     }
                 }
             }
@@ -740,20 +726,6 @@ private fun profileSummary(p: AppProfile): String = buildList {
     if (p.width != null && p.height != null) add("${p.width}x${p.height}")
     p.rotation?.let { add(rotationLabel(it)) }
 }.joinToString(" · ")
-
-/**
- * `wm density` no impone un minimo real: acepta valores muy por debajo de
- * ldpi (120). Por debajo de ~72 los layouts empiezan a romperse de verdad
- * (campos de texto recortados, elementos solapados), asi que ahi paramos.
- */
-private const val MIN_DPI = 72
-private const val MIN_DPI_SLIDER = 80
-private const val MAX_DPI = 640
-
-private val DENSITY_PRESETS = listOf(
-    72, 80, 100, 120, 140, 160, 200, 240, 280,
-    320, 360, 400, 440, 480, 520, 560, 640,
-)
 
 private fun rotationLabel(rotation: Int): String = when (rotation) {
     0 -> "Vertical"

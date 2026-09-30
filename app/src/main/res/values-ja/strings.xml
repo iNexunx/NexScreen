@@ -34,12 +34,10 @@
     <string name="reset">リセット</string>
     <string name="density_current">現在: %1$d（物理: %2$s）</string>
     <string name="unknown">不明</string>
-    <string name="density_value">%1$d dpi</string>
     <string name="custom_value">カスタム値</string>
     <string name="apply">適用</string>
     <string name="resolution_title">解像度</string>
     <string name="resolution_current">現在: %1$s（物理: %2$s）</string>
-    <string name="preset_native">ネイティブ</string>
     <string name="width_field">幅（px）</string>
     <string name="height_field">高さ（px）</string>
     <string name="apply_resolution">解像度を適用</string>
@@ -71,7 +69,6 @@
     <string name="custom_dpi">カスタム DPI</string>
     <string name="custom_rotation">回転</string>
     <string name="rotation_note">アプリが画面にある間だけ適用されます。独自の向きを指定するアプリは無視します。</string>
-    <string name="dpi_range">%1$d 〜 %2$d dpi</string>
     <string name="custom_resolution">カスタム解像度</string>
     <string name="width_short">幅</string>
     <string name="height_short">高さ</string>

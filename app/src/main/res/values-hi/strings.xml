@@ -34,12 +34,10 @@
     <string name="reset">रीसेट करें</string>
     <string name="density_current">वर्तमान: %1$d (भौतिक: %2$s)</string>
     <string name="unknown">अज्ञात</string>
-    <string name="density_value">%1$d dpi</string>
     <string name="custom_value">कस्टम मान</string>
     <string name="apply">लागू करें</string>
     <string name="resolution_title">रिज़ॉल्यूशन</string>
     <string name="resolution_current">वर्तमान: %1$s (भौतिक: %2$s)</string>
-    <string name="preset_native">मूल</string>
     <string name="width_field">चौड़ाई (px)</string>
     <string name="height_field">ऊंचाई (px)</string>
     <string name="apply_resolution">रिज़ॉल्यूशन लागू करें</string>
@@ -71,7 +69,6 @@
     <string name="custom_dpi">कस्टम DPI</string>
     <string name="custom_rotation">रोटेशन</string>
     <string name="rotation_note">यह केवल तब लागू होता है जब ऐप स्क्रीन पर हो। जो ऐप अपनी दिशा तय करते हैं वे इसे अनदेखा करते हैं।</string>
-    <string name="dpi_range">%1$d से %2$d dpi के बीच</string>
     <string name="custom_resolution">कस्टम रिज़ॉल्यूशन</string>
     <string name="width_short">चौड़ाई</string>
     <string name="height_short">ऊंचाई</string>

@@ -5,7 +5,6 @@ import android.net.Uri
 import android.os.Build
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,7 +17,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -66,8 +64,6 @@ import nx.screen.ds.ui.component.SettingRowHeader
 import nx.screen.ds.ui.component.SplicedColumnGroup
 import nx.screen.ds.ui.component.SplicedGroupScope
 import nx.screen.ds.ui.theme.AppButton
-import nx.screen.ds.ui.theme.AppFilterChip
-import nx.screen.ds.ui.theme.AppSlider
 import nx.screen.ds.ui.theme.AppTextButton
 import nx.screen.ds.ui.theme.AspectRatioIcon
 import nx.screen.ds.ui.theme.DensityIcon
@@ -246,13 +242,14 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
                         DensityItem(
                             current = density,
                             physical = physicalDensity,
-                            sliderValue = sliderDensity,
                             enabled = enabled && backendReady,
-                            onSliderChange = { sliderDensity = it },
                             fieldValue = densityField,
-                            onFieldChange = {
-                                densityField = it
-                                it.toIntOrNull()?.let { v -> sliderDensity = v.coerceIn(160, 640) }
+                            onFieldChange = { input ->
+                                val digits = input.filter(Char::isDigit).take(9)
+                                densityField = digits
+                                digits.toIntOrNull()
+                                    ?.takeIf { it > 0 }
+                                    ?.let { sliderDensity = it }
                             },
                             onFocusChange = { editing = it },
                             onReset = { confirmResetName = ResetKind.DENSITY.name },
@@ -689,9 +686,7 @@ private fun openUrl(context: android.content.Context, url: String) {
 private fun DensityItem(
     current: Int?,
     physical: Int?,
-    sliderValue: Int,
     enabled: Boolean,
-    onSliderChange: (Int) -> Unit,
     fieldValue: String,
     onFieldChange: (String) -> Unit,
     onFocusChange: (Boolean) -> Unit,
@@ -723,27 +718,8 @@ private fun DensityItem(
             else stringResource(R.string.unknown),
             style = MaterialTheme.typography.bodyMedium,
         )
-        AppSlider(
-            value = sliderValue.toFloat(),
-            onValueChange = { onSliderChange((it / 20).toInt() * 20) },
-            valueRange = 160f..640f,
-            steps = 23,
-            enabled = enabled,
-        )
-        Text(stringResource(R.string.density_value, sliderValue), style = MaterialTheme.typography.labelLarge)
-        Row(
-            modifier = Modifier.horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            DENSITY_PRESETS.forEach { p ->
-                AppFilterChip(
-                    selected = sliderValue == p,
-                    onClick = { onSliderChange(p) },
-                    label = { Text("$p") },
-                    enabled = enabled,
-                )
-            }
-        }
+        // Solo entrada manual: el valor se envia tal cual a `wm density`,
+        // que es quien decide si lo acepta. Sin slider ni presets.
         AppOutlinedTextField(
             value = fieldValue,
             onValueChange = onFieldChange,
@@ -769,22 +745,6 @@ private fun SizeItem(
     onFocusChange: (Boolean) -> Unit,
     onReset: () -> Unit,
 ) {
-    val presets = physical?.let { p ->
-        listOf(
-            Pair(stringResource(R.string.preset_native), p),
-            Pair("50%", p.scale(0.5f)),
-            Pair("60%", p.scale(0.6f)),
-            Pair("70%", p.scale(0.7f)),
-            Pair("80%", p.scale(0.8f)),
-            Pair("90%", p.scale(0.9f)),
-            Pair("110%", p.scale(1.1f)),
-            Pair("120%", p.scale(1.2f)),
-            Pair("130%", p.scale(1.3f)),
-            Pair("140%", p.scale(1.4f)),
-            Pair("150%", p.scale(1.5f)),
-        )
-    } ?: emptyList()
-
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -811,19 +771,7 @@ private fun SizeItem(
             else stringResource(R.string.unknown),
             style = MaterialTheme.typography.bodyMedium,
         )
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.horizontalScroll(rememberScrollState())) {
-            presets.forEach { (label, s) ->
-                AppFilterChip(
-                    selected = current == s,
-                    onClick = {
-                        onWidthChange(s.w.toString())
-                        onHeightChange(s.h.toString())
-                    },
-                    label = { Text("$label ${s.w}x${s.h}") },
-                    enabled = enabled,
-                )
-            }
-        }
+        // Solo entrada manual de ancho y alto. Sin presets: `wm size` valida.
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             AppOutlinedTextField(
                 value = width,

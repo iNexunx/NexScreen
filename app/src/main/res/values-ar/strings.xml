@@ -34,12 +34,10 @@
     <string name="reset">إعادة ضبط</string>
     <string name="density_current">الحالية: %1$d (الفعلية: %2$s)</string>
     <string name="unknown">غير معروفة</string>
-    <string name="density_value">%1$d dpi</string>
     <string name="custom_value">قيمة مخصصة</string>
     <string name="apply">تطبيق</string>
     <string name="resolution_title">الدقة</string>
     <string name="resolution_current">الحالية: %1$s (الفعلية: %2$s)</string>
-    <string name="preset_native">الأصلية</string>
     <string name="width_field">العرض (px)</string>
     <string name="height_field">الارتفاع (px)</string>
     <string name="apply_resolution">تطبيق الدقة</string>
@@ -71,7 +69,6 @@
     <string name="custom_dpi">DPI مخصص</string>
     <string name="custom_rotation">التدوير</string>
     <string name="rotation_note">يُطبَّق فقط عندما يكون التطبيق على الشاشة. تتجاهله التطبيقات التي تضبط اتجاهها الخاص.</string>
-    <string name="dpi_range">بين %1$d و%2$d dpi</string>
     <string name="custom_resolution">دقة مخصصة</string>
     <string name="width_short">العرض</string>
     <string name="height_short">الارتفاع</string>

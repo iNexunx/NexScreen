@@ -13,8 +13,7 @@ import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import nx.screen.ds.R
 import nx.screen.ds.data.AppProfile
-import nx.screen.ds.data.AppProfileStore
-import kotlinx.coroutines.CoroutineScope
+import nx.screen.ds.data.AppProfileStoreimport kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
@@ -70,6 +69,9 @@ class ProfileService : Service() {
     override fun onDestroy() {
         pollJob?.cancel()
         scope.cancel()
+        // La restauracion va en un scope propio porque `scope` ya esta
+        // cancelado aqui: si se lanzara dentro, la corrutina no llegaria a
+        // ejecutarse y la densidad/tamano quedaban puestos para siempre.
         CoroutineScope(SupervisorJob() + Dispatchers.IO).launch { restoreOriginals() }
         super.onDestroy()
     }
@@ -113,6 +115,12 @@ class ProfileService : Service() {
 
     private suspend fun monitor() {
         while (scope.isActive) {
+            // Si quedo una restauracion pendiente de una sesion anterior (el
+            // servicio arranco sin Shizuku/root, o Shizuku murio a mitad), se
+            // reintenta aqui en cada ciclo hasta que el backend vuelva.
+            if (hasPendingOriginals() && AppShell.active != null) {
+                restorePersistedIfNeeded()
+            }
             applyForForeground()
             delay(POLL_MS)
         }
@@ -208,20 +216,40 @@ class ProfileService : Service() {
         }
     }
 
+    /**
+     * Aplica los valores del perfil. Cada `wm` se ejecuta en un `runCatching`:
+     * si Shizuku o root mueren entre un comando y el siguiente, una excepcion
+     * suelta aqui tumbaba el bucle de sondeo entero y el servicio dejaba de
+     * restaurar para siempre. Ademas logueamos el fallo porque es la unica
+     * pista de por que un valor no se aplico.
+     */
     private suspend fun applyProfile(wm: WmController, profile: AppProfile) {
         profile.density?.let { d ->
-            val current = wm.density()
-            if (current != d) wm.setDensity(d)
+            runCatching {
+                if (wm.density() != d) wm.setDensity(d).also { logResult("density $d", it) }
+            }.onFailure { logFailure("density", it) }
         }
         if (profile.width != null && profile.height != null) {
-            val current = wm.size()
-            if (current != Size(profile.width, profile.height)) {
-                wm.setSize(Size(profile.width, profile.height))
-            }
+            runCatching {
+                val target = Size(profile.width, profile.height)
+                if (wm.size() != target) wm.setSize(target).also { logResult("size ${target.w}x${target.h}", it) }
+            }.onFailure { logFailure("size", it) }
         }
         profile.rotation?.let { target ->
-            if (wm.lockedRotation() != target) wm.setRotation(target)
+            runCatching {
+                if (wm.lockedRotation() != target) wm.setRotation(target).also { logResult("rotation $target", it) }
+            }.onFailure { logFailure("rotation", it) }
         }
+    }
+
+    private fun logResult(what: String, result: CommandResult) {
+        if (result.code != 0) {
+            android.util.Log.w(TAG, "wm $what fallo (code=${result.code}): ${result.stderr.trim()}")
+        }
+    }
+
+    private fun logFailure(what: String, error: Throwable) {
+        android.util.Log.w(TAG, "wm $what lanzo ${error::class.java.simpleName}: ${error.message}")
     }
 
     private suspend fun restoreOriginals(wm: WmController? = null) {
@@ -260,6 +288,15 @@ class ProfileService : Service() {
         prefs.edit().clear().apply()
     }
 
+    /**
+     * Restaura los originales que quedaron guardados en una sesion anterior.
+     *
+     * Importante: si Shizuku (o root) no esta disponible NO se descartan los
+     * valores guardados. Antes esta funcion hacia `return` para siempre y el
+     * movil se quedaba con la densidad y el tamano del perfil hasta que
+     * reiniciaras el servicio a mano. Ahora dejamos los originales en disco y
+     * el bucle de sondeo los reintenta en cuanto vuelve el backend.
+     */
     private suspend fun restorePersistedIfNeeded() {
         if (!prefs.contains(KEY_DENSITY) && !prefs.contains(KEY_W) &&
             !prefs.contains(KEY_ROTATION)
@@ -277,6 +314,10 @@ class ProfileService : Service() {
         }
         clearPersistedOriginals()
     }
+
+    /** Quedan originales pendientes de restaurar en disco? */
+    private fun hasPendingOriginals(): Boolean =
+        prefs.contains(KEY_DENSITY) || prefs.contains(KEY_W) || prefs.contains(KEY_ROTATION)
 
     private fun getForegroundPackage(): String? {
         return runCatching {
@@ -304,6 +345,7 @@ class ProfileService : Service() {
     }
 
     companion object {
+        private const val TAG = "NexScreenProfile"
         private const val CHANNEL_ID = "profile_service"
         private const val NOTIFICATION_ID = 1
         private const val POLL_MS = 1000L

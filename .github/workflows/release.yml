@@ -80,7 +80,7 @@ jobs:
           ./gradlew :app:assembleRelease \
             -Pandroid.injected.signing.versionCode=1
 
-      - name: Verificar que el APK está firmado
+      - name: Verificar firma y esquemas v1/v2/v3
         run: |
           APK=$(find app/build/outputs/apk/release -name '*.apk' | head -1)
           if [ -z "$APK" ]; then
@@ -92,6 +92,28 @@ jobs:
           # pasan como argumentos, así que apksigner responde
           # "Unsupported command: ...". Nos quedamos con la más alta.
           APKSIGNER=$(ls -1d "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)
+
+          # --verbose imprime "Verified using v1 scheme: true/false" y lo mismo
+          # para v2/v3. Con minSdk 21 Android exige v1 (v2 solo existe desde
+          # la 24), asi que los tres tienen que estar activos.
+          VERBOSE=$("$APKSIGNER" verify --verbose "$APK" 2>&1)
+          echo "$VERBOSE"
+
+          FAILED=0
+          for SCHEME in v1 v2 v3; do
+            LINE=$(echo "$VERBOSE" | grep -i "Verified using $SCHEME scheme" | head -1)
+            if echo "$LINE" | grep -q "true"; then
+              echo "OK: $SCHEME firmado"
+            else
+              echo "::error::Esquema $SCHEME no firmado: ${LINE:-sin linea}"
+              FAILED=1
+            fi
+          done
+          if [ "$FAILED" -ne 0 ]; then
+            exit 1
+          fi
+
+          # El digest del firmante debe coincidir con el del keystore usado.
           "$APKSIGNER" verify --print-certs "$APK"
           cp "$APK" "NexScreen-${{ steps.ver.outputs.name }}.apk"
           echo "APK=$APK" >> "$GITHUB_ENV"

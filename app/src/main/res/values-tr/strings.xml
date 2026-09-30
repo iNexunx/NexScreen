@@ -34,12 +34,10 @@
     <string name="reset">Sıfırla</string>
     <string name="density_current">Geçerli: %1$d (fiziksel: %2$s)</string>
     <string name="unknown">Bilinmiyor</string>
-    <string name="density_value">%1$d dpi</string>
     <string name="custom_value">Özel değer</string>
     <string name="apply">Uygula</string>
     <string name="resolution_title">Çözünürlük</string>
     <string name="resolution_current">Geçerli: %1$s (fiziksel: %2$s)</string>
-    <string name="preset_native">Yerel</string>
     <string name="width_field">Genişlik (px)</string>
     <string name="height_field">Yükseklik (px)</string>
     <string name="apply_resolution">Çözünürlüğü uygula</string>
@@ -71,7 +69,6 @@
     <string name="custom_dpi">Özel DPI</string>
     <string name="custom_rotation">Yönlendirme</string>
     <string name="rotation_note">Yalnızca uygulama ekrandayken geçerlidir. Kendi yönlendirmesini ayarlayan uygulamalar bunu yok sayar.</string>
-    <string name="dpi_range">%1$d ile %2$d dpi arasında</string>
     <string name="custom_resolution">Özel çözünürlük</string>
     <string name="width_short">Genişlik</string>
     <string name="height_short">Yükseklik</string>

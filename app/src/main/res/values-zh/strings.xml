@@ -34,12 +34,10 @@
     <string name="reset">重置</string>
     <string name="density_current">当前：%1$d（物理：%2$s）</string>
     <string name="unknown">未知</string>
-    <string name="density_value">%1$d dpi</string>
     <string name="custom_value">自定义值</string>
     <string name="apply">应用</string>
     <string name="resolution_title">分辨率</string>
     <string name="resolution_current">当前：%1$s（物理：%2$s）</string>
-    <string name="preset_native">原始</string>
     <string name="width_field">宽度（px）</string>
     <string name="height_field">高度（px）</string>
     <string name="apply_resolution">应用分辨率</string>
@@ -71,7 +69,6 @@
     <string name="custom_dpi">自定义 DPI</string>
     <string name="custom_rotation">旋转</string>
     <string name="rotation_note">仅在应用位于前台时生效。自行设定方向的应用会忽略此设置。</string>
-    <string name="dpi_range">%1$d 到 %2$d dpi</string>
     <string name="custom_resolution">自定义分辨率</string>
     <string name="width_short">宽度</string>
     <string name="height_short">高度</string>

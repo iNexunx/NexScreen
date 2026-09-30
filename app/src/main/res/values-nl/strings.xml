@@ -34,12 +34,10 @@
     <string name="reset">Herstellen</string>
     <string name="density_current">Huidige: %1$d (fysieke: %2$s)</string>
     <string name="unknown">Onbekend</string>
-    <string name="density_value">%1$d dpi</string>
     <string name="custom_value">Aangepaste waarde</string>
     <string name="apply">Toepassen</string>
     <string name="resolution_title">Resolutie</string>
     <string name="resolution_current">Huidige: %1$s (fysieke: %2$s)</string>
-    <string name="preset_native">Native</string>
     <string name="width_field">Breedte (px)</string>
     <string name="height_field">Hoogte (px)</string>
     <string name="apply_resolution">Resolutie toepassen</string>
@@ -71,7 +69,6 @@
     <string name="custom_dpi">Aangepaste DPI</string>
     <string name="custom_rotation">Rotatie</string>
     <string name="rotation_note">Geldt alleen terwijl de app op het scherm staat. Apps met een eigen oriëntatie negeren dit.</string>
-    <string name="dpi_range">Tussen %1$d en %2$d dpi</string>
     <string name="custom_resolution">Aangepaste resolutie</string>
     <string name="width_short">Breedte</string>
     <string name="height_short">Hoogte</string>

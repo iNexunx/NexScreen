@@ -34,12 +34,10 @@
     <string name="reset">Resetuj</string>
     <string name="density_current">Aktualna: %1$d (fizyczna: %2$s)</string>
     <string name="unknown">Nieznana</string>
-    <string name="density_value">%1$d dpi</string>
     <string name="custom_value">Wartość niestandardowa</string>
     <string name="apply">Zastosuj</string>
     <string name="resolution_title">Rozdzielczość</string>
     <string name="resolution_current">Aktualna: %1$s (fizyczna: %2$s)</string>
-    <string name="preset_native">Natywna</string>
     <string name="width_field">Szerokość (px)</string>
     <string name="height_field">Wysokość (px)</string>
     <string name="apply_resolution">Zastosuj rozdzielczość</string>
@@ -71,7 +69,6 @@
     <string name="custom_dpi">Niestandardowy DPI</string>
     <string name="custom_rotation">Obrót</string>
     <string name="rotation_note">Działa tylko, gdy aplikacja jest na ekranie. Aplikacje z własną orientacją to ignorują.</string>
-    <string name="dpi_range">Od %1$d do %2$d dpi</string>
     <string name="custom_resolution">Niestandardowa rozdzielczość</string>
     <string name="width_short">Szerokość</string>
     <string name="height_short">Wysokość</string>
