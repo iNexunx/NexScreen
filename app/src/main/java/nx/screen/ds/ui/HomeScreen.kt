@@ -77,8 +77,6 @@ import nx.screen.ds.ui.theme.statusGreen
 import nx.screen.ds.ui.theme.statusRed
 import rikka.shizuku.Shizuku
 
-private val DENSITY_PRESETS = listOf(320, 360, 400, 420, 440, 480)
-
 private enum class ResetKind { DENSITY, SIZE, SYSTEM }
 
 @Composable
@@ -709,7 +707,9 @@ private fun DensityItem(
                 description = "",
                 modifier = Modifier.weight(1f),
             )
-            if (sliderValue != physical) {
+            // Compara contra el valor realmente aplicado, no contra el campo:
+            // asi "reset" aparece solo cuando `wm` tiene un override puesto.
+            if (current != null && current != physical) {
                 AppTextButton(onClick = onReset, enabled = enabled) { Text(stringResource(R.string.reset)) }
             }
         }
