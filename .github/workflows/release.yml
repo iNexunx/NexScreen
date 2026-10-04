@@ -1,0 +1,186 @@
+name: Release
+
+# Un unico workflow para todo: valida que compile (debug), compila el release
+# con R8, verifica la firma y publica. Solo lo dispara el tag, asi que publicar
+# una version produce exactamente una ejecucion.
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version_name:
+        description: 'Nombre de versión (ej. 1.0)'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          # `--generate-notes` necesita el historial completo para
+          # listar los commits del rango; con depth 1 solo ve el ultimo.
+          fetch-depth: 0
+
+      - name: Determinar versión
+        id: ver
+        env:
+          # Va por env, no interpolado en el `run:`: un input con comillas o
+          # salto de linea inyectaria shell. Ademas el valor acaba en un tag,
+          # un nombre de fichero y una linea de $GITHUB_OUTPUT.
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_VERSION: ${{ inputs.version_name }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            NAME="$INPUT_VERSION"
+          else
+            NAME="${GITHUB_REF_NAME#v}"
+          fi
+          # `[[ =~ ]]` ancla a la cadena COMPLETA, asi que un salto de linea
+          # no pasa: con `grep` linea a linea, "$" cerraba en la primera linea
+          # y el resto se colaba como segunda linea de $GITHUB_OUTPUT.
+          if [[ ! "$NAME" =~ ^[0-9]+(\.[0-9]+){0,3}$ ]]; then
+            echo "::error::Nombre de versión inválido: '$NAME' (solo dígitos y puntos)"
+            exit 1
+          fi
+          echo "name=$NAME" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      # Valida que el proyecto entero compila antes de invertir en firmar.
+      - name: Build debug (valida compilacion)
+        run: ./gradlew :app:assembleDebug
+
+      - name: Preparar keystore
+        env:
+          KEYSTORE_B64: ${{ secrets.KEYSTORE_B64 }}
+          STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/nexun.jks"
+            {
+              echo "KS_FILE=$RUNNER_TEMP/nexun.jks"
+              echo "STORE_TYPE=JKS"
+              echo "STORE_PASSWORD=$STORE_PASSWORD"
+              echo "KEY_ALIAS=$KEY_ALIAS"
+              echo "KEY_PASSWORD=${KEY_PASSWORD:-$STORE_PASSWORD}"
+            } >> "$GITHUB_ENV"
+            echo ">>> Firmando con tu keystore"
+          else
+            cp keystore/aosp-testkey.p12 "$RUNNER_TEMP/aosp-testkey.p12"
+            {
+              echo "KS_FILE=$RUNNER_TEMP/aosp-testkey.p12"
+              echo "STORE_TYPE=PKCS12"
+              echo "STORE_PASSWORD=android"
+              echo "KEY_ALIAS=testkey"
+              echo "KEY_PASSWORD=android"
+            } >> "$GITHUB_ENV"
+            echo "::notice title=Firma::Se usan los defaults de codigo abierto (testkey publico de AOSP). Define KEYSTORE_B64 y demas secretos para firmar con tu propia clave."
+          fi
+
+      - name: Validar keystore
+        run: |
+          keytool -list -keystore "$KS_FILE" -storetype "$STORE_TYPE" \
+            -storepass "$STORE_PASSWORD" -alias "$KEY_ALIAS"
+
+      - name: Build release (R8 + shrink)
+        env:
+          NEXUN_KEYSTORE: ${{ env.KS_FILE }}
+          NEXUN_STORE_TYPE: ${{ env.STORE_TYPE }}
+          NEXUN_STORE_PASSWORD: ${{ env.STORE_PASSWORD }}
+          NEXUN_KEY_ALIAS: ${{ env.KEY_ALIAS }}
+          NEXUN_KEY_PASSWORD: ${{ env.KEY_PASSWORD }}
+        # versionCode/versionName salen de app/build.gradle.kts: el flag
+        # -Pandroid.injected.signing.versionCode era inerte y desconectaba
+        # el APK de la version declarada.
+        run: ./gradlew :app:assembleRelease
+
+      - name: Verificar firma y esquemas v1/v2/v3
+        run: |
+          APK=$(find app/build/outputs/apk/release -name '*.apk' | head -1)
+          if [ -z "$APK" ]; then
+            echo "::error::No se generó APK"
+            exit 1
+          fi
+          # El runner tiene varias versiones de build-tools. Un glob directo
+          # ("build-tools/*/apksigner") expande a N rutas y las que sobran se
+          # pasan como argumentos, así que apksigner responde
+          # "Unsupported command: ...". Nos quedamos con la más alta.
+          APKSIGNER=$(ls -1d "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)
+
+          # --verbose imprime "Verified using v1 scheme: true/false" y lo mismo
+          # para v2/v3. Con minSdk 21 Android exige v1 (v2 solo existe desde
+          # la 24), asi que los tres tienen que estar activos.
+          VERBOSE=$("$APKSIGNER" verify --verbose "$APK" 2>&1)
+          echo "$VERBOSE"
+
+          FAILED=0
+          for SCHEME in v1 v2 v3; do
+            LINE=$(echo "$VERBOSE" | grep -i "Verified using $SCHEME scheme" | head -1)
+            if echo "$LINE" | grep -q "true"; then
+              echo "OK: $SCHEME firmado"
+            else
+              echo "::error::Esquema $SCHEME no firmado: ${LINE:-sin linea}"
+              FAILED=1
+            fi
+          done
+          if [ "$FAILED" -ne 0 ]; then
+            exit 1
+          fi
+
+          # El digest del firmante debe coincidir con el del keystore usado.
+          "$APKSIGNER" verify --print-certs "$APK"
+          cp "$APK" "NexScreen-${{ steps.ver.outputs.name }}.apk"
+
+      - name: Publicar release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.ver.outputs.name }}
+          EVENT_NAME: ${{ github.event_name }}
+          GITHUB_SHA_REF: ${{ github.sha }}
+          STORE_TYPE: ${{ env.STORE_TYPE }}
+        run: |
+          set -euo pipefail
+          NOTES="$(mktemp)"
+          if [ "$STORE_TYPE" = "PKCS12" ]; then
+            {
+              printf '%s\n' '> Build de código abierto, firmada con el **testkey publico de AOSP** (`CN=Android`).'
+              printf '\n%s\n' '> Para compilar desde fuente con tu propia firma, configura los secretos `KEYSTORE_B64`, `STORE_PASSWORD`, `KEY_ALIAS` y `KEY_PASSWORD`.'
+            } > "$NOTES"
+          fi
+          # En dispatch el tag lo crea `gh release create --target`. Antes se
+          # hacia `git push origin v$TAG`, que disparaba una segunda ejecucion
+          # por `push: tags: v*` y esta fallaba porque la release ya existia.
+          # En el caso de push el tag ya existe y --target se ignora.
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            echo "Publicando v$TAG sobre $GITHUB_SHA_REF"
+          fi
+          # Con firma propia el fichero de notas queda vacio y --notes-file lo
+          # publicaria en blanco: en ese caso se deja que solo aplique
+          # --generate-notes.
+          if [ -s "$NOTES" ]; then
+            gh release create "v$TAG" \
+              "NexScreen-$TAG.apk" \
+              --title "NexScreen $TAG" \
+              --notes-file "$NOTES" \
+              --generate-notes \
+              --target "$GITHUB_SHA_REF"
+          else
+            gh release create "v$TAG" \
+              "NexScreen-$TAG.apk" \
+              --title "NexScreen $TAG" \
+              --generate-notes \
+              --target "$GITHUB_SHA_REF"
+          fi

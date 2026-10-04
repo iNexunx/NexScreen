@@ -1,0 +1,34 @@
+# Gradle
+.gradle/
+build/
+local.properties
+
+# Android
+*.apk
+*.aab
+*.ap_
+*.dex
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Signing material — NEVER commit these
+*.jks
+*.keystore
+nexun-signing.properties
+google-services.json
+
+# AOSP testkey intermediates (public key, kept out of the tree for tidiness).
+# keystore/aosp-testkey.p12 IS committed on purpose: the AOSP test key is
+# published by Google and is public knowledge, so it carries no secret.
+*.pk8
+keystore/testkey.key
+
+# IDE
+.idea/
+*.iml
+.DS_Store
+
+# Tooling scratch
+*.log
+__pycache__/
